@@ -1,0 +1,11 @@
+openai
+paramiko
+filelock
+numpy
+scipy
+azure-mgmt-compute 
+azure-mgmt-network 
+azure-mgmt-resource 
+azure-identity 
+azure-storage-file-share
+azure-cli
