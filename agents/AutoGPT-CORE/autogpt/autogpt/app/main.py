@@ -96,7 +96,11 @@ async def run_auto_gpt(
     override_directives: bool = False,
 ):
     # init weave
-    weave.init(override_ai_name)
+    try:
+        weave.init(override_ai_name)
+    except Exception as e:
+        print("WARRNING: weave init failed, error: ", e)
+
     # Set up configuration
     config = ConfigBuilder.build_config_from_env()
     # Storage
