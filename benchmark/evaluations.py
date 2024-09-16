@@ -12,7 +12,6 @@ import openai
 from openai import RateLimitError
 from scipy.stats import t
 from tqdm import tqdm
-from config import OPENAI_API_KEY
 
 def eval_result_file(result_file: str, dataset_file: str, llm_summary = False, verbose = False):
     with open(result_file, "r") as f:
