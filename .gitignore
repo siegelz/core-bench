@@ -1,0 +1,9 @@
+env
+__pycache__
+
+/config.py
+
+benchmark/dataset/capsule-*
+benchmark/temp_envs/
+benchmark/results
+benchmark/logs
