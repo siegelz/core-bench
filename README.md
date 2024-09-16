@@ -3,9 +3,13 @@
 ## Description
 The `CORE-Bench` Harness is a benchmarking framework for evaluating the performance of agents on the `CORE-Bench` dataset. Through this harness, you can evaluate your own agents on `CORE-Bench`, or use the `AutoGPT` and `CORE-Bench` agents evaluated in the `CORE-Bench` paper.
 
+If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
+
 ## Installation and Setup
-To set up the repository, install the required Python packages:
+The harness has been tested with Python 3.9. Install the required packages:
 ```bash
+python3 -m venv env
+source env/bin/activate
 pip3 install -r requirements.txt
 ```
 
@@ -31,13 +35,13 @@ To run the `AutoGPT` and `CORE-Bench` agents, you will also need to add your Ope
 
 To run `CORE-Agent` (gpt-4o) on the first ten tasks of the `CORE-Bench` test set at Hard difficulty, run the following command:
 ```bash
-python3 main.py 
-    --experiment_name test_coreagent_gpt4o_c-4
-    --agent_dir agents/AutoGPT-CORE
-    --dataset_file benchmark/dataset/core_test.json 
-    --use_azure
-    --task_limit 10
-    --benchmark_level codeocean_hard
+python3 main.py \
+    --experiment_name test_coreagent_gpt4o_c-4 \
+    --agent_dir agents/AutoGPT-CORE \
+    --dataset_file benchmark/dataset/core_test.json \
+    --use_azure \
+    --task_limit 10 \
+    --benchmark_level codeocean_hard \
     --agent_script coreagent_hard_gpt4o.sh
 ```
 
