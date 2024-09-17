@@ -1,5 +1,7 @@
 # CORE-Bench Overview
-CORE-Bench is a benchmark for evaluating agents ability to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R. To successfully complete a task, the agent must read the task prompt and questions, navigate through the code repository to install dependencies, run the code to genereate answers, and read through the code outputs to extract the answers.
+CORE-Bench evaluates agents ability to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
+
+To successfully complete a task, the agent must read the task prompt and questions, navigate through the code repository to install dependencies, run the code to genereate answers, and read through the code outputs to extract the answers.
 
 ![Local Image](./images/benchmark_overview.png)
 
