@@ -15,8 +15,8 @@ If you are interested in generating figures and tables from the `CORE-Bench` pap
 ## Installation and Setup
 The harness has been tested with Python 3.9. Install the required packages:
 ```bash
-python3 -m venv env
-source env/bin/activate
+conda create --name core-bench python=3.9
+conda activate core-bench
 pip3 install -r requirements.txt
 ```
 
@@ -25,7 +25,8 @@ Next, you will need to decrypt `benchmark/dataset/core_test.json.gpg` to access 
 gpg --output benchmark/dataset/core_test.json --decrypt benchmark/dataset/core_test.json.gpg
 ```
 
-It is strongly reccomended that you run agents on Azure VMs by including the `--use_azure` flag when running the benchmark. To do so, you will also need to create a `config.py` file in the root of the repository with Azure credentials and the path to a SSH key. The file should look like this:
+### Azure Setup
+It is strongly reccomended that you run agents on Azure VMs by including the `--use_azure` flag when running the benchmark (we plan on supporting additional cloud environments soon). To do so, you will also need to create a `config.py` file in the root of the repository with Azure credentials and the path to a SSH key. The file should look like this:
 ```python
 AZURE_SUBSCRIPTION_ID = "XXX-XXX-XXX-XXX-XXX"
 AZURE_RESOURCE_GROUP_NAME = "XXX"
@@ -35,6 +36,11 @@ SSH_PUBLIC_KEY_PATH = "/Users/XXX/.ssh/id_rsa.pub"
 SSH_PRIVATE_KEY_PATH = "/Users/XXX/.ssh/id_rsa"
 ```
 
+The harness runs on [`Standard_E2as_v5`]("https://cloudprice.net/vm/Standard_E2as_v5") and [`Standard_NC4as_T4_v3`]("https://cloudprice.net/vm/Standard_NC4as_T4_v3") machine types for non-GPU and GPU tasks, respectively. The harness will automatically create a new VM for each task and delete the VM once the task has been completed.
+
+You may need to ["request a quota increase"]("https://portal.azure.com/#view/Microsoft_Azure_Capacity/QuotaMenuBlade/~/myQuotas") for the `Standard_NC4as_T4_v3` machine type if you plan on running GPU tasks.
+
+### Local Setup
 Alternatively, you can run the benchmark locally. **However, this approach is not reccomended because the benchmark does not run in an isolated environment when ran locally. Therefore, the agent can access all files on the machine running the benchmark.** Local development should only be used for debugging purposes.
 
 ## Running the Harness
