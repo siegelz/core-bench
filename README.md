@@ -1,5 +1,5 @@
 # CORE-Bench Overview
-CORE-Bench is a benchmark evaluating the ability of agents to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
+`CORE-Bench` is a benchmark evaluating the ability of agents to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
 
 To successfully complete a task, the agent must read the task prompt and questions, navigate through the code repository to install dependencies, run the code to genereate results, and read through the code results to answer the task questions.
 
@@ -8,7 +8,7 @@ To successfully complete a task, the agent must read the task prompt and questio
 You can find the CORE-Bench [paper here]() and view the [dataset here](https://huggingface.co/datasets/siegelz/core-bench).
 
 ## Harness Description
-The `CORE-Bench` Harness is a benchmarking framework for evaluating the performance of agents on the `CORE-Bench` dataset. Through this harness, you can evaluate your own agents on `CORE-Bench`, or use the `AutoGPT` and `CORE-Bench` agents evaluated in the `CORE-Bench` paper.
+This harness allows you to easily evaluate your own agents, or the `AutoGPT` and `CORE-Bench` agents, on the `CORE-Bench` dataset. The harness runs agents in an isolated environment, automatically creating and deleting VMs on Azure for each task. The harness also provides a simple interface for adding new agents to the benchmark.
 
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
