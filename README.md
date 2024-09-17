@@ -1,11 +1,11 @@
 # CORE-Bench Overview
-CORE-Bench evaluates agents ability to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
+CORE-Bench is a benchmark evaluating the ability of agents to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
 
-To successfully complete a task, the agent must read the task prompt and questions, navigate through the code repository to install dependencies, run the code to genereate answers, and read through the code outputs to extract the answers.
+To successfully complete a task, the agent must read the task prompt and questions, navigate through the code repository to install dependencies, run the code to genereate results, and read through the code results to answer the task questions.
 
 ![Local Image](./images/benchmark_overview.png)
 
-You can find the CORE-Bench paper [here]() and view the dataset [here](https://huggingface.co/datasets/siegelz/core-bench).
+You can find the CORE-Bench [paper here]() and view the [dataset here](https://huggingface.co/datasets/siegelz/core-bench).
 
 ## Harness Description
 The `CORE-Bench` Harness is a benchmarking framework for evaluating the performance of agents on the `CORE-Bench` dataset. Through this harness, you can evaluate your own agents on `CORE-Bench`, or use the `AutoGPT` and `CORE-Bench` agents evaluated in the `CORE-Bench` paper.
@@ -26,7 +26,9 @@ gpg --output benchmark/dataset/core_test.json --decrypt benchmark/dataset/core_t
 ```
 
 ### Azure Setup
-It is strongly reccomended that you run agents on Azure VMs by including the `--use_azure` flag when running the benchmark (we plan on supporting additional cloud environments soon). First, install the [Azure CLI](https://learn.microsoft.com/bs-latn-ba/cli/azure/install-azure-cli) and log in to your Azure account by running `az login`.
+It is strongly reccomended that you run agents on Azure VMs by including the `--use_azure` flag when running the benchmark (we plan on supporting additional cloud environments soon). However, you must install and configure the Azure CLI to do so.
+
+First, install the [Azure CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) and log in to your Azure account by running `azd auth login`.
 
 Next, create a `config.py` file in the root of the repository with Azure credentials and the path to a SSH key. The file should look like this:
 ```python
@@ -42,20 +44,24 @@ The harness runs on [Standard_E2as_v5](https://cloudprice.net/vm/Standard_E2as_v
 
 You may need to [request a quota increase](https://portal.azure.com/#view/Microsoft_Azure_Capacity/QuotaMenuBlade/~/myQuotas) for the `Standard_NC4as_T4_v3` machine type if you plan on running GPU tasks.
 
+For a FAQ on setting up Azure, please see the [Azure FAQ](azure_faq.md). if you are having any trouble, feel free to reach out to us.
+
 ### Local Setup
-Alternatively, you can run the benchmark locally. **However, this approach is not reccomended because the benchmark does not run in an isolated environment when ran locally. Therefore, the agent can access all files on the machine running the benchmark.** Local development should only be used for debugging purposes.
+For debugging purposes only, you can run the benchmark locally. **However, this approach is not reccomended because the benchmark does not run in an isolated environment when ran locally. Therefore, any libraries or dependencies the agent installs will affect your machine and persist across tasks, and the agent has access all files on the machine running the benchmark.**
+
+We are working on implementing a Docker container for the harness to run in an isolated environment and plan on releasing this soon.
 
 ## Running the Harness
 To run the `AutoGPT` and `CORE-Bench` agents, you will also need to add your OpenAI API keys to the `agents/AutoGPT-CORE/autogpt/.env` file. A template for this file can be found at `agents/AutoGPT-CORE/autogpt/.env.template`.
 
-To run `CORE-Agent` (gpt-4o) on the first ten tasks of the `CORE-Bench` test set at Hard difficulty, run the following command:
+To run `CORE-Agent` (gpt-4o) on the first two tasks of the `CORE-Bench` test set at Hard difficulty, run the following command:
 ```bash
 python3 main.py \
     --experiment_name test_coreagent_gpt4o_c-4 \
     --agent_dir agents/AutoGPT-CORE \
     --dataset_file benchmark/dataset/core_test.json \
     --use_azure \
-    --task_limit 10 \
+    --task_limit 2 \
     --benchmark_level codeocean_hard \
     --agent_script coreagent_hard_gpt4o.sh
 ```
