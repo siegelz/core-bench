@@ -135,7 +135,8 @@ class CodeOceanBenchmark:
             assert os.path.splitext(os.path.basename(self.resume_results_path))[0].split("_", 1)[1] == self.benchmark_level, "Benchmark name in resume results path does not match benchmark name."
             self.timestamp = os.path.splitext(os.path.basename(self.resume_results_path))[0].split("_")[0]
 
-        self.VMM = VirtualMachineManager()
+        if self.use_azure:
+            self.VMM = VirtualMachineManager()
 
         if benchmark_level not in ['codeocean_easy', 'codeocean_medium', 'codeocean_hard']:
             raise ValueError(f"Invalid benchmark name: {benchmark_level}.")
