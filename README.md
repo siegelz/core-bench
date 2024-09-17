@@ -13,8 +13,9 @@ This harness allows you to easily evaluate your own agents, or the `AutoGPT` and
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
 ## Installation and Setup
-The harness has been tested with Python 3.9. Install the required packages:
+The harness has been tested with Python 3.9. Clone the repository and install the required packages:
 ```bash
+git clone https://github.com/siegelz/core-bench.git && cd core-bench
 conda create --name core-bench python=3.9
 conda activate core-bench
 pip3 install -r requirements.txt
