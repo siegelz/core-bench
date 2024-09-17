@@ -31,3 +31,6 @@ For `SSH_PUBLIC_KEY_PATH` and `SSH_PRIVATE_KEY_PATH`, use the path to your SSH p
 
 ## How do I request a quota increase for the `Standard_NC4as_T4_v3` machine type?
 To request a quota increase for the `Standard_NC4as_T4_v3` machine type, go to the [Azure portal](https://portal.azure.com/#view/Microsoft_Azure_Capacity/QuotaMenuBlade/~/myQuotas) and request a quota increase for the `Standard_NC4as_T4_v3` machine type.
+
+## How can I safely delete the Azure resources created by the harness?
+The harness automatically deletes the Azure resources it creates after the task has been completed. However, if the harness is interrupted or you wish to manually delete the resources, **make sure you delete the associated OS disk, network interface, and public IP address**. You must manually check these boxes when deleting the VM in the Azure portal.

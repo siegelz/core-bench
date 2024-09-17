@@ -25,7 +25,7 @@ Next, you will need to decrypt `benchmark/dataset/core_test.json.gpg` to access 
 gpg --output benchmark/dataset/core_test.json --decrypt benchmark/dataset/core_test.json.gpg
 ```
 
-### Azure Setup (FAQ [here](azure_faq.md))
+### Azure Setup ([FAQ here](azure_faq.md))
 It is strongly reccomended that you run agents on Azure VMs by including the `--use_azure` flag when running the benchmark (we plan on supporting additional cloud environments soon). However, you must install and configure the Azure CLI to do so.
 
 First, install the [Azure CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) and log in to your Azure account by running `azd auth login`.
