@@ -36,7 +36,7 @@ SSH_PUBLIC_KEY_PATH = "/Users/XXX/.ssh/id_rsa.pub"
 SSH_PRIVATE_KEY_PATH = "/Users/XXX/.ssh/id_rsa"
 ```
 
-The harness runs on [`Standard_E2as_v5`]("https://cloudprice.net/vm/Standard_E2as_v5") and [`Standard_NC4as_T4_v3`]("https://cloudprice.net/vm/Standard_NC4as_T4_v3") machine types for non-GPU and GPU tasks, respectively. The harness will automatically create a new VM for each task and delete the VM once the task has been completed.
+The harness runs on [Standard_E2as_v5]("https://cloudprice.net/vm/Standard_E2as_v5") and [Standard_NC4as_T4_v3]("https://cloudprice.net/vm/Standard_NC4as_T4_v3") machine types for non-GPU and GPU tasks, respectively. The harness will automatically create a new VM for each task and delete the VM once the task has been completed.
 
 You may need to ["request a quota increase"]("https://portal.azure.com/#view/Microsoft_Azure_Capacity/QuotaMenuBlade/~/myQuotas") for the `Standard_NC4as_T4_v3` machine type if you plan on running GPU tasks.
 
