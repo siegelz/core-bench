@@ -4,6 +4,9 @@ __pycache__
 /config.py
 
 benchmark/dataset/capsule-*
+benchmark/dataset/core_test.json
 benchmark/temp_envs/
 benchmark/results
 benchmark/logs
+benchmark/agent_logs.tar.gz
+benchmark/agent_results.tar.gz
