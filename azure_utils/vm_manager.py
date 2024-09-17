@@ -416,6 +416,9 @@ class VirtualMachineManager:
         # Connect to the VM using SSH
         ssh_client.connect(hostname=public_ip_address, username=username, pkey=ssh_private_key)
 
+        # Block the codeocean.com domain
+        _, stdout, stderr = ssh_client.exec_command("echo '127.0.0.1 codeocean.com' | sudo tee -a /etc/hosts", timeout=1)
+
         # Run the agent script on the VM
         _, stdout, stderr = ssh_client.exec_command(f"sudo nohup bash -c '(timeout {timeout} bash /home/{username}/{agent_script}) ; touch /home/{username}/task_completed.log' > /home/{username}/output.log 2>&1 &", timeout=1)
 
