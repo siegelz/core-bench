@@ -5,7 +5,7 @@ To successfully complete a task, the agent must read the task prompt and questio
 
 ![Local Image](./images/benchmark_overview.png)
 
-You can find the CORE-Bench [paper here]() and view the [dataset here](https://huggingface.co/datasets/siegelz/core-bench).
+You can find the CORE-Bench [paper here](https://arxiv.org/abs/2409.11363) and view the [dataset here](https://huggingface.co/datasets/siegelz/core-bench).
 
 ## Harness Description
 This harness allows you to easily evaluate your own agents, or the `AutoGPT` and `CORE-Bench` agents, on the `CORE-Bench` dataset. The harness runs agents in an isolated environment, automatically creating and deleting VMs on Azure for each task. The harness also provides a simple interface for adding new agents to the benchmark.
