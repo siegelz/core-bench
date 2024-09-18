@@ -26,7 +26,7 @@ Next, you will need to decrypt `benchmark/dataset/core_test.json.gpg` to access 
 gpg --output benchmark/dataset/core_test.json --decrypt benchmark/dataset/core_test.json.gpg
 ```
 
-Note that the dataset JSON files contain the task prompts, task questions, and some other metadata for each task, not the associated code repositories. The harness automatically downloads the code repositories for each task from https://corebench.cs.princeton.edu/capsules/capsule-XXXXXXX.tar.gz, where XXXXXXX is the `capsule_id`.
+Note that the dataset JSON files contain the task prompts, task questions, and some other metadata for each task, not the associated code repositories. The harness automatically downloads the code repositories for each task from https://corebench.cs.princeton.edu/capsules/capsule-XXXXXXX.tar.gz, where `XXXXXXX` is the `capsule_id`.
 
 ### Azure Setup ([FAQ here](azure_faq.md))
 It is strongly reccomended that you run agents on Azure VMs by including the `--use_azure` flag when running the benchmark (we plan on supporting additional cloud environments soon). However, you must install and configure the Azure CLI to do so.
