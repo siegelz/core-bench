@@ -3,7 +3,7 @@ import os
 import queue
 import re
 import shutil
-import subprocess
+import docker
 import time
 import concurrent.futures
 from azure_utils.vm_manager import VirtualMachineManager
@@ -240,27 +240,61 @@ class CodeOceanBenchmark:
         with open(os.path.join(task_env_path, "task.txt"), "w") as f:
             f.write(task_str)
 
-    def __start_agent_local(self, task):
-        # Create the output log file.
+    """
+    Creates a Docker container, copies the environment and agent to the container, runs the agent,
+    and copies the results back for evaluation overwriting the task_path.
+    """
+    def __run_agent_local(self, task, image_name = 'ubuntu', timeout=8100, verbose=True):
+        # Path to environment in temp_envs
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
-        log_path = os.path.join(task_path, "output.log")
-        with open(log_path, "w") as file:
-            file.write("")
 
-        with subprocess.Popen(["sh", self.agent_script], 
-                                    stdout = subprocess.PIPE,
-                                    cwd = task_path) as p:
-            while True:
-                text = p.stdout.readline().decode("utf-8")
-                if self.print_output: print(text, end = '', flush = True)
-                with open(log_path, "a") as file:
-                    file.write(text)
-                if text == '' and p.poll() is not None: break
-        
-        # Create task_completed.log if it doesn't exist
-        if not os.path.exists(os.path.join(task_path, "task_completed.log")):
-            with open(os.path.join(task_path, "task_completed.log"), "w") as f:
-                f.write("")
+        # Create Docker container
+        client = docker.from_env()
+        client.images.pull(image_name)
+        container = client.containers.create(
+            image = image_name,
+            command = 'sleep infinity',
+        )
+        container.start()
+
+        print(f"[Benchmark] Created Docker container {container.id}")
+
+        # Create a tar archive of the environment
+        with tarfile.open(f"{task_path}.tar", "w") as tar:
+            tar.add(task_path, arcname=os.path.basename(task_path))
+
+        # Copy the tar to Docker container
+        with open(f"{task_path}.tar", "rb") as f:
+            container.put_archive(f"/", f)
+
+        shutil.rmtree(task_path)
+        os.remove(f"{task_path}.tar")
+
+        print(f"[Benchmark] Copied {task_path}.tar to Docker container {container.id}")
+
+        # Run agent in Docker container
+        docker_task_path = f"/{os.path.basename(task_path)}"
+        container.exec_run(f"bash -c '(timeout {timeout} bash {docker_task_path}/{self.agent_script}) > {docker_task_path}/output.log 2>&1 ; touch {docker_task_path}/task_completed.log'")
+        if verbose:
+            output = container.exec_run(f"cat {docker_task_path}/output.log")
+            print(f"\n{output.output.decode('utf-8')}")
+
+        print(f"[Benchmark] Ran agent in Docker container {container.id}")
+
+        # Copy results back to temp_envs
+        stream, _ = container.get_archive(f"{docker_task_path}")
+        with open(f"{task_path}.tar", "wb") as f:
+            for chunk in stream:
+                f.write(chunk)
+
+        with tarfile.open(f"{task_path}.tar", "r") as tar:
+            tar.extractall(path=os.path.dirname(task_path))
+        os.remove(f"{task_path}.tar")
+
+        container.stop()
+        container.remove()
+
+        print(f"[Benchmark] Copied results from Docker container {container.id}")
 
     def __eval_agent_local(self, task):
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
@@ -531,7 +565,7 @@ class CodeOceanBenchmark:
                 self.__setup_task_environment(task)
 
                 # Run and evaluate the agent
-                self.__start_agent_local(task)
+                self.__run_agent_local(task)
                 self.__eval_agent_local(task)
 
                 if self.delete_envs:
