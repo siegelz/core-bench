@@ -244,11 +244,13 @@ class CodeOceanBenchmark:
     Creates a Docker container, copies the environment and agent to the container, runs the agent,
     and copies the results back for evaluation overwriting the task_path.
     """
-    def __run_agent_local(self, task, image_name = 'ubuntu', timeout=8100, verbose=True):
+    def __run_agent_local(self, task, image_name = 'ubuntu:jammy', timeout=8100, verbose=True):
         # Path to environment in temp_envs
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
 
         # Create Docker container
+        print(f"[Benchmark] Creating Docker container for {task.capsule_id}")
+        
         client = docker.from_env()
         client.images.pull(image_name)
         container = client.containers.create(
@@ -256,45 +258,50 @@ class CodeOceanBenchmark:
             command = 'sleep infinity',
         )
         container.start()
+        container.exec_run("apt update")
+        container.exec_run("apt install -y sudo")
+        container.exec_run("bash -c 'echo \"export DEBIAN_FRONTEND=noninteractive\" >> /root/.bashrc'")
 
-        print(f"[Benchmark] Created Docker container {container.id}")
+        try:
+            print(f"[Benchmark] Copying files to Docker container {container.id}")
 
-        # Create a tar archive of the environment
-        with tarfile.open(f"{task_path}.tar", "w") as tar:
-            tar.add(task_path, arcname=os.path.basename(task_path))
+            # Create a tar archive of the environment
+            with tarfile.open(f"{task_path}.tar", "w") as tar:
+                tar.add(task_path, arcname=os.path.basename(task_path))
 
-        # Copy the tar to Docker container
-        with open(f"{task_path}.tar", "rb") as f:
-            container.put_archive(f"/", f)
+            # Copy the tar to Docker container
+            with open(f"{task_path}.tar", "rb") as f:
+                container.put_archive(f"/", f)
 
-        shutil.rmtree(task_path)
-        os.remove(f"{task_path}.tar")
+            shutil.rmtree(task_path)
+            os.remove(f"{task_path}.tar")
 
-        print(f"[Benchmark] Copied {task_path}.tar to Docker container {container.id}")
+            print(f"[Benchmark] Running agent on Docker container {container.id}")
 
-        # Run agent in Docker container
-        docker_task_path = f"/{os.path.basename(task_path)}"
-        container.exec_run(f"bash -c '(timeout {timeout} bash {docker_task_path}/{self.agent_script}) > {docker_task_path}/output.log 2>&1 ; touch {docker_task_path}/task_completed.log'")
-        if verbose:
-            output = container.exec_run(f"cat {docker_task_path}/output.log")
-            print(f"\n{output.output.decode('utf-8')}")
+            # Run agent in Docker container
+            docker_task_path = f"/{os.path.basename(task_path)}"
+            container.exec_run(f"bash -c '(timeout {timeout} bash {docker_task_path}/{self.agent_script}) > {docker_task_path}/output.log 2>&1 ; touch {docker_task_path}/task_completed.log'")
 
-        print(f"[Benchmark] Ran agent in Docker container {container.id}")
+            if verbose:
+                output = container.exec_run(f"cat {docker_task_path}/output.log")
+                print(f"\n{output.output.decode('utf-8')}")
 
-        # Copy results back to temp_envs
-        stream, _ = container.get_archive(f"{docker_task_path}")
-        with open(f"{task_path}.tar", "wb") as f:
-            for chunk in stream:
-                f.write(chunk)
+            print(f"[Benchmark] Copying files from Docker container {container.id}")
 
-        with tarfile.open(f"{task_path}.tar", "r") as tar:
-            tar.extractall(path=os.path.dirname(task_path))
-        os.remove(f"{task_path}.tar")
+            # Copy results back to temp_envs
+            stream, _ = container.get_archive(f"{docker_task_path}")
+            with open(f"{task_path}.tar", "wb") as f:
+                for chunk in stream:
+                    f.write(chunk)
 
-        container.stop()
-        container.remove()
-
-        print(f"[Benchmark] Copied results from Docker container {container.id}")
+            with tarfile.open(f"{task_path}.tar", "r") as tar:
+                tar.extractall(path=os.path.dirname(task_path))
+            os.remove(f"{task_path}.tar")
+        except KeyboardInterrupt:
+            print(f"[Benchmark] Attempting to gracefully exit and clean up Docker container {container.id}")
+        finally:
+            container.stop()
+            container.remove()
 
     def __eval_agent_local(self, task):
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
