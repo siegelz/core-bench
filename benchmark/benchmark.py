@@ -111,7 +111,7 @@ class CodeOceanTask:
         return True
 
 class CodeOceanBenchmark:
-    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False):
+    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_container = True, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False):
         self.experiment_name = experiment_name
         self.benchmark_level = benchmark_level
         self.dataset_results_path = dataset_results_path
@@ -122,6 +122,7 @@ class CodeOceanBenchmark:
         self.exp_log_dir = exp_log_dir
         self.resume_results_path = resume_results_path
         self.use_azure = use_azure
+        self.delete_container = delete_container
         self.delete_vm = delete_vm
         self.print_output = print_output
         self.timestamp = time.strftime('%Y%m%d-%H%M%S', time.localtime())
@@ -208,6 +209,10 @@ class CodeOceanBenchmark:
         os.makedirs(task_env_path, exist_ok = True)
         shutil.copytree(os.path.join(self.dataset_dir, task.capsule_id), os.path.join(task_env_path, task.capsule_id))
 
+        # Copy Dockerfile to environment
+        # TODO: Modify it with task parameters
+        shutil.copyfile(os.path.join("docker", "Dockerfile"), os.path.join(task_path, "Dockerfile"))
+
         # Remove files depending on task difficulty
         if self.benchmark_level != "codeocean_easy":
             task_results_path = os.path.join(task_capsule_path, "results")
@@ -244,64 +249,53 @@ class CodeOceanBenchmark:
     Creates a Docker container, copies the environment and agent to the container, runs the agent,
     and copies the results back for evaluation overwriting the task_path.
     """
-    def __run_agent_local(self, task, image_name = 'ubuntu:jammy', timeout=8100, verbose=True):
+    def __run_agent_local(self, task, timeout=8100):
         # Path to environment in temp_envs
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
 
-        # Create Docker container
-        print(f"[Benchmark] Creating Docker container for {task.capsule_id}")
-        
+        # Build the Docker image
+        print(f"[Benchmark] Building Docker image for {task.capsule_id}")
         client = docker.from_env()
-        client.images.pull(image_name)
-        container = client.containers.create(
-            image = image_name,
-            command = 'sleep infinity',
+        client.images.build(
+            path = task_path,
+            tag = f"{task.capsule_id}-{self.timestamp}",
+            rm = True,
         )
-        container.start()
-        container.exec_run("apt update")
-        container.exec_run("apt install -y sudo")
-        container.exec_run("bash -c 'echo \"export DEBIAN_FRONTEND=noninteractive\" >> /root/.bashrc'")
 
+        # Run the agent in the Docker container
         try:
-            print(f"[Benchmark] Copying files to Docker container {container.id}")
+            print(f"[Benchmark] Running agent in Docker container for {task.capsule_id}")
+            container = client.containers.run(
+                image = f"{task.capsule_id}-{self.timestamp}",
+                name = f"{task.capsule_id}-{self.timestamp}",
+                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script}) > /capsule/output.log 2>&1 ; touch /capsule/task_completed.log'",
+                detach = True,
+                stdout = True,
+                stderr = True,
+            )
+            container.wait()
 
-            # Create a tar archive of the environment
-            with tarfile.open(f"{task_path}.tar", "w") as tar:
-                tar.add(task_path, arcname=os.path.basename(task_path))
-
-            # Copy the tar to Docker container
-            with open(f"{task_path}.tar", "rb") as f:
-                container.put_archive(f"/", f)
-
-            shutil.rmtree(task_path)
-            os.remove(f"{task_path}.tar")
-
-            print(f"[Benchmark] Running agent on Docker container {container.id}")
-
-            # Run agent in Docker container
-            docker_task_path = f"/{os.path.basename(task_path)}"
-            container.exec_run(f"bash -c '(timeout {timeout} bash {docker_task_path}/{self.agent_script}) > {docker_task_path}/output.log 2>&1 ; touch {docker_task_path}/task_completed.log'")
-
-            if verbose:
-                output = container.exec_run(f"cat {docker_task_path}/output.log")
-                print(f"\n{output.output.decode('utf-8')}")
-
-            print(f"[Benchmark] Copying files from Docker container {container.id}")
-
-            # Copy results back to temp_envs
-            stream, _ = container.get_archive(f"{docker_task_path}")
+            # Download results from the Docker container
+            print(f"[Benchmark] Copying files from Docker container for {task.capsule_id}")
+            stream, _ = container.get_archive("/capsule")
             with open(f"{task_path}.tar", "wb") as f:
                 for chunk in stream:
                     f.write(chunk)
-
             with tarfile.open(f"{task_path}.tar", "r") as tar:
                 tar.extractall(path=os.path.dirname(task_path))
+
+            shutil.rmtree(task_path)
+            os.rename(os.path.join(os.path.dirname(task_path), "capsule"), task_path)
             os.remove(f"{task_path}.tar")
+
         except KeyboardInterrupt:
             print(f"[Benchmark] Attempting to gracefully exit and clean up Docker container {container.id}")
+
         finally:
-            container.stop()
-            container.remove()
+            if self.delete_container:
+                container.remove()
+                client.images.remove(f"{task.capsule_id}-{self.timestamp}")
+
 
     def __eval_agent_local(self, task):
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
@@ -582,3 +576,6 @@ class CodeOceanBenchmark:
         # Score and print results
         results_filepath = os.path.join(self.exp_results_dir, self.experiment_name, f"{self.timestamp}_{self.benchmark_level}.json")
         score_results(results_filepath, verbose = True)
+
+        if self.use_azure:
+            print("[Benchmark] Warning: Terminating the program early may not delete all associated Azure resources.")
