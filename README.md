@@ -8,7 +8,7 @@ To successfully complete a task, the agent must read the task prompt and questio
 You can find the CORE-Bench [paper here](https://arxiv.org/abs/2409.11363) and view the [dataset here](https://huggingface.co/datasets/siegelz/core-bench).
 
 ## Harness Description
-This harness allows you to easily evaluate your own agents, or the `AutoGPT` and `CORE-Bench` agents, on the `CORE-Bench` dataset. The harness runs agents in an isolated environment (either locally in a Docker container or an Azure VM). The harness also provides a simple interface for adding new agents to the benchmark.
+This harness allows you to easily evaluate your own agents, or the `AutoGPT` and `CORE-Bench` agents, on the `CORE-Bench` dataset. The harness runs agents in an isolated environment (either locally in a Docker container or on an Azure VM). The harness also provides a simple interface for adding new agents to the benchmark.
 
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
@@ -59,7 +59,7 @@ For a FAQ on setting up Azure, please see the [Azure FAQ](azure_faq.md). if you 
 ## Running the Harness
 To run the `AutoGPT` and `CORE-Bench` agents, you will also need to add your OpenAI API keys to the `agents/AutoGPT-CORE/autogpt/.env` file. A template for this file can be found at `agents/AutoGPT-CORE/autogpt/.env.template`.
 
-THe following command runs `CORE-Agent` (gpt-4o) on the first task of the test set not requiring a GPU on `CORE-Bench-Hard`. Include the `--use_azure` flag to run the harness on Azure (otherwise, the harness will run locally in a Docker container).
+The following command runs `CORE-Agent` (gpt-4o) on the first task of the test set not requiring a GPU on `CORE-Bench-Hard`. Include the `--use_azure` flag to run the harness on Azure (otherwise, the harness will run locally in a Docker container).
 ```bash
 python3 main.py \
     --experiment_name test_coreagent_gpt4o_c-4 \
