@@ -111,7 +111,7 @@ class CodeOceanTask:
         return True
 
 class CodeOceanBenchmark:
-    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False):
+    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False, verbose = False):
         self.experiment_name = experiment_name
         self.benchmark_level = benchmark_level
         self.dataset_results_path = dataset_results_path
@@ -129,6 +129,7 @@ class CodeOceanBenchmark:
         self.task_limit = task_limit
         self.delete_envs = delete_envs
         self.include_correct_result_paths = include_correct_result_paths
+        self.verbose = verbose
 
         if self.resume_results_path:
             assert os.path.exists(self.resume_results_path), "Resume results path does not exist."
@@ -268,12 +269,17 @@ class CodeOceanBenchmark:
             container = client.containers.run(
                 image = f"{task.capsule_id}-{self.timestamp}",
                 name = f"{task.capsule_id}-{self.timestamp}",
-                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script}) > /capsule/output.log 2>&1 ; touch /capsule/task_completed.log'",
+                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed.log'",
                 privileged = True,
                 detach = True,
                 stdout = True,
                 stderr = True,
             )
+
+            # Stream the output
+            if self.verbose:
+                for line in container.logs(stream=True):
+                    print(line.decode('utf-8').strip())
 
             # Wait for the container to finish
             container.wait()
