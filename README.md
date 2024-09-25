@@ -59,7 +59,7 @@ For a FAQ on setting up Azure, please see the [Azure FAQ](azure_faq.md). if you 
 ## Running the Harness
 To run the `AutoGPT` and `CORE-Bench` agents, you will also need to add your OpenAI API keys to the `agents/AutoGPT-CORE/autogpt/.env` file. A template for this file can be found at `agents/AutoGPT-CORE/autogpt/.env.template`.
 
-The following command runs `CORE-Agent` (gpt-4o) on the first task of the test set not requiring a GPU on `CORE-Bench-Hard`. Include the `--use_azure` flag to run the harness on Azure (otherwise, the harness will run locally in a Docker container).
+The following command runs `CORE-Agent` (gpt-4o) on the first task of the test set not requiring a GPU on `CORE-Bench-Hard`. Include the `--use_azure` flag to run tasks on Azure (otherwise, the tasks will run locally in a Docker container).
 ```bash
 python3 main.py \
     --experiment_name test_coreagent_gpt4o_c-4 \
