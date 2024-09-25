@@ -301,6 +301,7 @@ class CodeOceanBenchmark:
             print(f"[Benchmark] Attempting to gracefully exit and clean up Docker container {container.id}")
 
         finally:
+            container.stop()
             container.remove()
             client.images.remove(f"{task.capsule_id}-{self.timestamp}")
 
