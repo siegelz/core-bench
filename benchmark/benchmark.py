@@ -3,7 +3,7 @@ import os
 import queue
 import re
 import shutil
-import subprocess
+import docker
 import time
 import concurrent.futures
 from azure_utils.vm_manager import VirtualMachineManager
@@ -111,7 +111,7 @@ class CodeOceanTask:
         return True
 
 class CodeOceanBenchmark:
-    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False):
+    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False, verbose = False):
         self.experiment_name = experiment_name
         self.benchmark_level = benchmark_level
         self.dataset_results_path = dataset_results_path
@@ -129,6 +129,7 @@ class CodeOceanBenchmark:
         self.task_limit = task_limit
         self.delete_envs = delete_envs
         self.include_correct_result_paths = include_correct_result_paths
+        self.verbose = verbose
 
         if self.resume_results_path:
             assert os.path.exists(self.resume_results_path), "Resume results path does not exist."
@@ -208,6 +209,10 @@ class CodeOceanBenchmark:
         os.makedirs(task_env_path, exist_ok = True)
         shutil.copytree(os.path.join(self.dataset_dir, task.capsule_id), os.path.join(task_env_path, task.capsule_id))
 
+        # Copy Dockerfile to environment
+        # TODO: Modify it with task parameters
+        shutil.copyfile(os.path.join("docker", "Dockerfile"), os.path.join(task_path, "Dockerfile"))
+
         # Remove files depending on task difficulty
         if self.benchmark_level != "codeocean_easy":
             task_results_path = os.path.join(task_capsule_path, "results")
@@ -240,27 +245,66 @@ class CodeOceanBenchmark:
         with open(os.path.join(task_env_path, "task.txt"), "w") as f:
             f.write(task_str)
 
-    def __start_agent_local(self, task):
-        # Create the output log file.
+    """
+    Creates a Docker container, copies the environment and agent to the container, runs the agent,
+    and copies the results back for evaluation overwriting the task_path.
+    """
+    def __run_agent_local(self, task, timeout=8100):
+        # Path to environment in temp_envs
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
-        log_path = os.path.join(task_path, "output.log")
-        with open(log_path, "w") as file:
-            file.write("")
 
-        with subprocess.Popen(["sh", self.agent_script], 
-                                    stdout = subprocess.PIPE,
-                                    cwd = task_path) as p:
-            while True:
-                text = p.stdout.readline().decode("utf-8")
-                if self.print_output: print(text, end = '', flush = True)
-                with open(log_path, "a") as file:
-                    file.write(text)
-                if text == '' and p.poll() is not None: break
-        
-        # Create task_completed.log if it doesn't exist
-        if not os.path.exists(os.path.join(task_path, "task_completed.log")):
-            with open(os.path.join(task_path, "task_completed.log"), "w") as f:
-                f.write("")
+        # Build the Docker image
+        print(f"[Benchmark] Building Docker image for {task.capsule_id}")
+        client = docker.from_env()
+        client.images.build(
+            path = task_path,
+            dockerfile="Dockerfile",
+            tag = f"{task.capsule_id}-{self.timestamp}",
+            rm = True,
+        )
+
+        # Run the agent in the Docker container
+        try:
+            print(f"[Benchmark] Running agent in Docker container for {task.capsule_id}")
+            container = client.containers.run(
+                image = f"{task.capsule_id}-{self.timestamp}",
+                name = f"{task.capsule_id}-{self.timestamp}",
+                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed.log'",
+                privileged = True,
+                detach = True,
+                stdout = True,
+                stderr = True,
+            )
+
+            # Stream the output
+            if self.verbose:
+                for line in container.logs(stream=True):
+                    print(line.decode('utf-8').strip())
+
+            # Wait for the container to finish
+            container.wait()
+
+            # Download results from the Docker container
+            print(f"[Benchmark] Copying files from Docker container for {task.capsule_id}")
+            stream, _ = container.get_archive("/capsule")
+            with open(f"{task_path}.tar", "wb") as f:
+                for chunk in stream:
+                    f.write(chunk)
+            with tarfile.open(f"{task_path}.tar", "r") as tar:
+                tar.extractall(path=os.path.dirname(task_path))
+
+            shutil.rmtree(task_path)
+            os.rename(os.path.join(os.path.dirname(task_path), "capsule"), task_path)
+            os.remove(f"{task_path}.tar")
+
+        except KeyboardInterrupt:
+            print(f"[Benchmark] Attempting to gracefully exit and clean up Docker container {container.id}")
+
+        finally:
+            container.stop()
+            container.remove()
+            client.images.remove(f"{task.capsule_id}-{self.timestamp}")
+
 
     def __eval_agent_local(self, task):
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
@@ -531,7 +575,7 @@ class CodeOceanBenchmark:
                 self.__setup_task_environment(task)
 
                 # Run and evaluate the agent
-                self.__start_agent_local(task)
+                self.__run_agent_local(task)
                 self.__eval_agent_local(task)
 
                 if self.delete_envs:
@@ -541,3 +585,6 @@ class CodeOceanBenchmark:
         # Score and print results
         results_filepath = os.path.join(self.exp_results_dir, self.experiment_name, f"{self.timestamp}_{self.benchmark_level}.json")
         score_results(results_filepath, verbose = True)
+
+        if self.use_azure:
+            print("[Benchmark] Warning: Terminating the program early may not delete all associated Azure resources.")

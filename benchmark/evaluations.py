@@ -189,7 +189,6 @@ def score_results(result_file, llm_summary = False, verbose = False):
         print(f"\tCorrect Written Questions: {correct_written_questions} / {tottal_written_questions}")
         print(f"\tCorrect Vision Questions: {correct_vision_questions} / {total_vision_questions}")
         print("==================================\n")
-    print("[Benchmark] Warning: Terminating the program early may not delete all associated Azure resources.")
 
     with open(result_file, "w") as f:
         json.dump(results, f, indent=4)

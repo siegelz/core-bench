@@ -22,6 +22,7 @@ def parse_args():
     parser.add_argument("--task_limit", type=int, default=None, help="Limit the number of tasks to run")
     parser.add_argument("--keep_vm", action="store_true", help="Do not delete the Azure VM after running the benchmark")
     parser.add_argument("--keep_temp_envs", action="store_true", help="Keep the downloaded environment after running the benchmark")
+    parser.add_argument("--verbose", action="store_true", help="Print output of the benchmark")
     args = parser.parse_args()
     return args
 
@@ -44,6 +45,7 @@ if __name__ == "__main__":
                                    no_gpu = args.no_gpu,
                                    task_limit = args.task_limit,
                                    delete_envs = not args.keep_temp_envs,
-                                   include_correct_result_paths = args.include_correct_result_paths)
+                                   include_correct_result_paths = args.include_correct_result_paths,
+                                   verbose = args.verbose)
     
     benchmark.run()
