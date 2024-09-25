@@ -269,10 +269,13 @@ class CodeOceanBenchmark:
                 image = f"{task.capsule_id}-{self.timestamp}",
                 name = f"{task.capsule_id}-{self.timestamp}",
                 command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script}) > /capsule/output.log 2>&1 ; touch /capsule/task_completed.log'",
+                privileged = True,
                 detach = True,
                 stdout = True,
                 stderr = True,
             )
+
+            # Wait for the container to finish
             container.wait()
 
             # Download results from the Docker container

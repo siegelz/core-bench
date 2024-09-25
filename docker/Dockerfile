@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM ubuntu:jammy
+FROM cruizba/ubuntu-dind:jammy-latest
 
 # Set the working directory
 WORKDIR /capsule
