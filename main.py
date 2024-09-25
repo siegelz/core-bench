@@ -21,7 +21,6 @@ def parse_args():
     parser.add_argument("--no_gpu", action="store_true", help="Skip tasks that require a GPU")
     parser.add_argument("--task_limit", type=int, default=None, help="Limit the number of tasks to run")
     parser.add_argument("--keep_vm", action="store_true", help="Do not delete the Azure VM after running the benchmark")
-    parser.add_argument("--keep_container", action="store_true", help="Do not delete the Docker container after a local run of the benchmark")
     parser.add_argument("--keep_temp_envs", action="store_true", help="Keep the downloaded environment after running the benchmark")
     args = parser.parse_args()
     return args
@@ -40,7 +39,6 @@ if __name__ == "__main__":
                                    exp_log_dir = os.path.join(os.getcwd(), "benchmark", "logs"),
                                    resume_results_path = args.resume_path,
                                    use_azure = args.use_azure,
-                                   delete_container = not args.keep_container,
                                    delete_vm = not args.keep_vm,
                                    print_output = not args.use_azure,
                                    no_gpu = args.no_gpu,

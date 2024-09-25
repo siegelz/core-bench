@@ -111,7 +111,7 @@ class CodeOceanTask:
         return True
 
 class CodeOceanBenchmark:
-    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_container = True, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False):
+    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False):
         self.experiment_name = experiment_name
         self.benchmark_level = benchmark_level
         self.dataset_results_path = dataset_results_path
@@ -122,7 +122,6 @@ class CodeOceanBenchmark:
         self.exp_log_dir = exp_log_dir
         self.resume_results_path = resume_results_path
         self.use_azure = use_azure
-        self.delete_container = delete_container
         self.delete_vm = delete_vm
         self.print_output = print_output
         self.timestamp = time.strftime('%Y%m%d-%H%M%S', time.localtime())
@@ -258,6 +257,7 @@ class CodeOceanBenchmark:
         client = docker.from_env()
         client.images.build(
             path = task_path,
+            dockerfile="Dockerfile",
             tag = f"{task.capsule_id}-{self.timestamp}",
             rm = True,
         )
@@ -292,9 +292,8 @@ class CodeOceanBenchmark:
             print(f"[Benchmark] Attempting to gracefully exit and clean up Docker container {container.id}")
 
         finally:
-            if self.delete_container:
-                container.remove()
-                client.images.remove(f"{task.capsule_id}-{self.timestamp}")
+            container.remove()
+            client.images.remove(f"{task.capsule_id}-{self.timestamp}")
 
 
     def __eval_agent_local(self, task):

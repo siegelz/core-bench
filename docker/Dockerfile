@@ -7,5 +7,6 @@ WORKDIR /capsule
 # Copy the current directory contents into the container at /capsule
 COPY . /capsule
 
-# Install any dependencies specified in requirements.txt
-# RUN pip install --no-cache-dir -r requirements.txt
+# Install some packages
+RUN apt-get update && apt-get install -y sudo && apt-get install -y wget
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
