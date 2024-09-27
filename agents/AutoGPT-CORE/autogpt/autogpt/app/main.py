@@ -367,7 +367,7 @@ async def run_auto_gpt(
     start_time = time.time()
     # get output.log file path
     output_log_path = str(os.path.abspath(__file__)).replace("autogpt/autogpt/app/main.py", "output.log")
-    task_completed_log_path = str(os.path.abspath(__file__)).replace("autogpt/autogpt/app/main.py", "task_completed.log")
+    agent_trace_log_path = str(os.path.abspath(__file__)).replace("autogpt/autogpt/app/main.py", "agent_trace.log")
     # if not os.path.exists(output_log_path):
     #     with open(output_log_path, "w") as f:
     #         f.write("")
@@ -432,7 +432,7 @@ async def run_auto_gpt(
     }
 
     # Write the log content to the file
-    with open(task_completed_log_path, 'w') as log_file:
+    with open(agent_trace_log_path, 'w') as log_file:
         json.dump(log_content, log_file)
 
     

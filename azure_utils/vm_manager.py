@@ -361,7 +361,7 @@ class VirtualMachineManager:
         sftp_client.close()
         ssh_client.close()
 
-    def check_task_completion(self, vm_name, username, ssh_private_key_path, filename = "task_completed.log"):
+    def check_task_completion(self, vm_name, username, ssh_private_key_path, task_completed_filename = "task_completed", agent_trace_filename = "agent_trace.log"):
         # Get the public IP address of the VM
         vm = self.compute_client.virtual_machines.get(self.resource_group_name, vm_name)
         public_ip_address = self.network_client.public_ip_addresses.get(
@@ -381,13 +381,19 @@ class VirtualMachineManager:
         # Create an SFTP client
         sftp_client = ssh_client.open_sftp()
 
-        # Return the contents of log.txt if it exists, otherwise return None
-        log_file_path = f"/home/{username}/{filename}"
+        # Check for task completion via existence of task_completed_filepath
+        task_completed_filepath = f"/home/{username}/{task_completed_filename}"
+        agent_trace_filepath = f"/home/{username}/{agent_trace_filename}"
+
         try:
-            with sftp_client.open(log_file_path) as file:
-                log_contents = file.read().decode("utf-8")
+            with sftp_client.open(task_completed_filepath) as file:
+                try:
+                    with sftp_client.open(agent_trace_filepath) as agent_file:
+                        log_contents = agent_file.read().decode("utf-8")
+                except FileNotFoundError:
+                    log_contents = ""  # agent_trace_filepath does not exist
         except FileNotFoundError:
-            log_contents = None
+            log_contents = None  # task_completed_filepath does not exist
 
         # Close the SFTP client and SSH connection
         sftp_client.close()
@@ -420,7 +426,7 @@ class VirtualMachineManager:
         _, stdout, stderr = ssh_client.exec_command("echo '127.0.0.1 codeocean.com' | sudo tee -a /etc/hosts", timeout=1)
 
         # Run the agent script on the VM
-        _, stdout, stderr = ssh_client.exec_command(f"sudo nohup bash -c '(timeout {timeout} bash /home/{username}/{agent_script}) ; touch /home/{username}/task_completed.log' > /home/{username}/output.log 2>&1 &", timeout=1)
+        _, stdout, stderr = ssh_client.exec_command(f"sudo nohup bash -c '(timeout {timeout} bash /home/{username}/{agent_script}) ; touch /home/{username}/task_completed' > /home/{username}/output.log 2>&1 &", timeout=1)
 
         # Close the SSH connection
         ssh_client.close()
