@@ -1,7 +1,7 @@
 #!/bin/bash
 SCRIPT_DIR=$(dirname "$0")
 
-log_file_temp="task_completed_temp.log"
+log_file="agent_trace.log"
 
 # Install dependencies
 sudo apt update
@@ -33,9 +33,7 @@ file="environment/$cap_subdir/REPRODUCING.md"
 # Extract the command between the ```shell``` block
 command=$(sed -n '/```shell/,/```/p' "$file" | sed -e '1d;$d')
 
-echo "Running command: $command" | tee -a $log_file_temp
+echo "Running command: $command" | tee -a $log_file
 
 # Run the extracted command with a timeout, log output to file, and display on stdout
-sudo bash -c "cd 'environment/$cap_subdir' && timeout 7500 $command" 2>&1 | tee -a $log_file_temp
-
-mv $log_file_temp task_completed.log
+sudo bash -c "cd 'environment/$cap_subdir' && timeout 7500 $command" 2>&1 | tee -a $log_file

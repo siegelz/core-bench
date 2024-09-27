@@ -269,7 +269,7 @@ class CodeOceanBenchmark:
             container = client.containers.run(
                 image = f"{task.capsule_id}-{self.timestamp}",
                 name = f"{task.capsule_id}-{self.timestamp}",
-                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed.log'",
+                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed'",
                 privileged = True,
                 detach = True,
                 stdout = True,
@@ -310,7 +310,7 @@ class CodeOceanBenchmark:
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
         
         # Log the agent debug output
-        log_contents = open(os.path.join(task_path, "task_completed.log"), "r").read()
+        log_contents = open(os.path.join(task_path, "agent_trace.log"), "r").read()
         self.__write_task_log(task, log_contents)
 
         # Evaluate the agent and log results
@@ -405,7 +405,8 @@ class CodeOceanBenchmark:
                         vm_name = f"{task.capsule_id}-{self.timestamp}",
                         username = "crab",
                         ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
-                        filename = "task_completed.log"
+                        task_completed_filename = "task_completed",
+                        agent_trace_filename = "agent_trace.log"
                     )
                     break
                 except Exception as e:
@@ -539,7 +540,8 @@ class CodeOceanBenchmark:
                             vm_name = f"{task.capsule_id}-{self.timestamp}",
                             username = "crab",
                             ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
-                            filename = "task_completed.log"
+                            task_completed_filename = "task_completed",
+                            agent_trace_filename = "agent_trace.log"
                         )
                         consec_download_fails[task.capsule_id] = 0
                         if log_contents is not None:
