@@ -1,3 +1,11 @@
+<p align="center">
+    <a href="https://arxiv.org/abs/2409.11363">
+    <img alt="Paper" src="https://img.shields.io/badge/arXiv-arXiv:2409.11363-b31b1b.svg">
+    </a>
+    <a href="https://huggingface.co/datasets/siegelz/core-bench">
+    <img alt="Dataset" src="https://img.shields.io/badge/Hugging%20Face-Dataset-yellow.svg">
+</p>
+
 # CORE-Bench Overview
 `CORE-Bench` is a benchmark for evaluating the ability of agents to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
 
