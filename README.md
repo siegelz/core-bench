@@ -4,6 +4,10 @@
     </a>
     <a href="https://huggingface.co/datasets/siegelz/core-bench">
     <img alt="Dataset" src="https://img.shields.io/badge/Hugging%20Face-Dataset-yellow.svg">
+    </a>
+    <a href = "https://agent-evals-core-leaderboard.hf.space">
+    <img alt="Leaderboard" src="https://img.shields.io/badge/Leaderboard-Link-blue.svg">
+    </a>
 </p>
 
 # CORE-Bench Overview
