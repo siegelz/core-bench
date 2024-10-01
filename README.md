@@ -1,10 +1,12 @@
 <p align="center">
     <a href="https://arxiv.org/abs/2409.11363">
     <img alt="Paper" src="https://img.shields.io/badge/arXiv-arXiv:2409.11363-b31b1b.svg">
-    <a href="https://huggingface.co/datasets/siegelz/core-bench">
-    <img alt="Dataset" src="https://img.shields.io/badge/Hugging%20Face-Dataset-yellow.svg">
     <a href = "https://agent-evals-core-leaderboard.hf.space">
     <img alt="Leaderboard" src="https://img.shields.io/badge/Leaderboard-Link-blue.svg">
+    <a href = "https://github.com/siegelz/core-bench">
+    <img alt="GitHub" src="https://img.shields.io/badge/GitHub-Repository-181717.svg">
+    <a href="https://huggingface.co/datasets/siegelz/core-bench">
+    <img alt="Dataset" src="https://img.shields.io/badge/Hugging%20Face-Dataset-yellow.svg">
 </p>
 
 # CORE-Bench Overview
