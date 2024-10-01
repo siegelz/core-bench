@@ -111,7 +111,7 @@ class CodeOceanTask:
         return True
 
 class CodeOceanBenchmark:
-    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, use_azure = False, delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False, verbose = False):
+    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, platform = "local", delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False, verbose = False):
         self.experiment_name = experiment_name
         self.benchmark_level = benchmark_level
         self.dataset_results_path = dataset_results_path
@@ -121,7 +121,7 @@ class CodeOceanBenchmark:
         self.exp_results_dir = exp_results_dir
         self.exp_log_dir = exp_log_dir
         self.resume_results_path = resume_results_path
-        self.use_azure = use_azure
+        self.platform = platform
         self.delete_vm = delete_vm
         self.print_output = print_output
         self.timestamp = time.strftime('%Y%m%d-%H%M%S', time.localtime())
@@ -136,7 +136,7 @@ class CodeOceanBenchmark:
             assert os.path.splitext(os.path.basename(self.resume_results_path))[0].split("_", 1)[1] == self.benchmark_level, "Benchmark name in resume results path does not match benchmark name."
             self.timestamp = os.path.splitext(os.path.basename(self.resume_results_path))[0].split("_")[0]
 
-        if self.use_azure:
+        if self.platform == "azure":
             self.VMM = VirtualMachineManager()
 
         if benchmark_level not in ['codeocean_easy', 'codeocean_medium', 'codeocean_hard']:
@@ -486,7 +486,7 @@ class CodeOceanBenchmark:
 
             tasks.append(task)
 
-        if self.use_azure:
+        if self.platform == "azure":
             from config import SSH_PRIVATE_KEY_PATH
 
             # Constants
@@ -588,5 +588,5 @@ class CodeOceanBenchmark:
         results_filepath = os.path.join(self.exp_results_dir, self.experiment_name, f"{self.timestamp}_{self.benchmark_level}.json")
         score_results(results_filepath, verbose = True)
 
-        if self.use_azure:
+        if self.platform == "azure":
             print("[Benchmark] Warning: Terminating the program early may not delete all associated Azure resources.")
