@@ -24,7 +24,10 @@ This harness allows you to easily evaluate your own agents, or the `AutoGPT` and
 
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
-## Installation and Setup
+## Leaderboard
+You can view the `CORE-Bench` leaderboard [here](https://agent-evals-core-leaderboard.hf.space). To submit your agent to the leaderboard, you must run it on this harness and follow the [instructions here](https://agent-evals-core-leaderboard.hf.space).
+
+# Installation and Setup
 The harness has been tested with Python 3.9. Clone the repository and install the required packages:
 ```bash
 git clone https://github.com/siegelz/core-bench.git && cd core-bench
@@ -42,12 +45,12 @@ Note that the dataset JSON files contain the task prompts, task questions, and s
 
 You have two options for running the harness: in a Docker container locally or on an Azure VM. Running on Azure allows you to parrallelize tasks and run the benchmark at scale, but running locally could be easier for testing or development purposes. Please follow the instructions below for your desired setup (or both).
 
-### Local Setup
+## Local Setup
 To run the harness locally, you will need to install Docker. You can find instructions for installing Docker [here](https://docs.docker.com/engine/install/). The harness will automatically build a Docker image for each agent-task pair, run the agent in the container, and download the results once the agent has completed the task.
 
 Please note that the harness runs containers with the `--privileged` flag to allow Docker in Docker (necessary for CORE-Bench-Medium) to work.
 
-### Azure Setup ([FAQ here](azure_faq.md))
+## Azure Setup ([FAQ here](azure_faq.md))
 If you wish to run the harness on Azure to parralelize and ensure standardized hardware for each task, you will need to install and configure the Azure CLI.
 
 First, install the [Azure CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) and log in to your Azure account by running `azd auth login`.
@@ -68,7 +71,7 @@ You may need to [request a quota increase](https://portal.azure.com/#view/Micros
 
 For a FAQ on setting up Azure, please see the [Azure FAQ](azure_faq.md). if you are having any trouble, feel free to reach out to us.
 
-## Running the Harness
+# Running the Harness
 To run the `AutoGPT` and `CORE-Bench` agents, you will also need to add your OpenAI API keys to the `agents/AutoGPT-CORE/autogpt/.env` file. A template for this file can be found at `agents/AutoGPT-CORE/autogpt/.env.template`.
 
 The following command runs `CORE-Agent` (gpt-4o) on the first task of the test set not requiring a GPU on `CORE-Bench-Hard`. Include the `--use_azure` flag to run tasks on Azure (otherwise, the tasks will run locally in a Docker container).
@@ -85,7 +88,7 @@ python3 main.py \
 
 Full details for reproducing the results of the `CORE-Bench` paper can be found in the `reproduce_results.sh` script.
 
-## Adding New Agents
+# Adding New Agents
 To add a new agent to the harness, create a new directory in the `agents` directory with the name of the agent. The directory should contain a Bash script that that harness can invoke to start the agent, which is specified in the ``--agent_script`` flag (e.g. `coreagent_hard_gpt4o.sh`).
 
 When the harness runs the agent, it will automatically copy all files within the agent directory directly into the base directory. In addition, the harness will create an `environment` directory within the base directory that contains the task prompt and task questions (`task.txt`) and the code repository of the associated task (`capsule-XXXXXXX`).:
@@ -106,7 +109,7 @@ environment/
 
 Therefore, your agent must read the `task.txt` file to get the task prompt and questions and navigate through the `capsule-XXXXXXX` directory to carry out the task.
 
-### Submitting Answers
+## Submitting Answers
 Once the agent has completed the task, it should write the answer to a file named `report.json` in the `environment` directory. The keys of the JSON object should be the task questions, and the values should be the answers. For example:
 ```json
 {
@@ -118,5 +121,5 @@ Once the agent has completed the task, it should write the answer to a file name
 
 The harness will automatically terminate the task once the `--agent_script` (e.g. `coreagent_hard_gpt4o.sh`) has completed. Therefore, the agent should write the `report.json` file once it has finished the task.
 
-### Debugging and Logging
+## Debugging and Logging
 If you wish to log any additional information (e.g. agent output, debugging information) for the harness to download after the agent has completed the task, write this information to a file named `agent_trace.log` in the **base directory with the other agent files** (not the `environment` directory). **If you plan on submitting your agent to the leaderboard, we require that you include agent traces for all tasks, so please implement this feature.**
