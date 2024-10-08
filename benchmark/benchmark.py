@@ -496,7 +496,7 @@ class CodeOceanBenchmark:
 
             # Constants
             AGENT_STARTUP_TIMEOUT = 60 * 60 # Max time to wait for a task VM to be created before timing out
-            MAX_CONSEC_ATTEMPTS = 10 # Max number of consecutive attempts to download results before giving up
+            MAX_CONSEC_ATTEMPTS = 20 # Max number of consecutive attempts to download results before giving up
             MAX_WORKERS = 20 # Max number of VMs to concurrently upload/download files from
 
             print("======== Creating VMs ========\n")
@@ -557,10 +557,10 @@ class CodeOceanBenchmark:
                             task_queue.put(task)
                     except Exception as e:
                         consec_download_fails[task.capsule_id] += 1
-                        print(f"[Benchmark] Failed to download results from {task.capsule_id} on attempt {consec_download_fails[task.capsule_id]}: {e}")
                         if consec_download_fails[task.capsule_id] < MAX_CONSEC_ATTEMPTS:
                             task_queue.put(task)
                         else:
+                            print(f"[Benchmark] Failed to connect to VM for {task.capsule_id} after {MAX_CONSEC_ATTEMPTS} attempts: {e}")
                             print(f"[Benchmark] Deleting the VM for {task.capsule_id}...")
                             failed_agents.append({task.capsule_id: "Failed to download results"})
                             if self.delete_vm:
