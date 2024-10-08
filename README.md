@@ -45,7 +45,7 @@ Note that the dataset JSON files contain the task prompts, task questions, and s
 You have two options for running the harness: in a Docker container locally or on an Azure VM. Running on Azure allows you to parrallelize tasks and run the benchmark at scale, but running locally could be easier for testing or development purposes. Please follow the instructions below for your desired setup (or both).
 
 ## Local Setup
-To run the harness locally, you will need to install Docker. You can find instructions for installing Docker [here](https://docs.docker.com/engine/install/). The harness will automatically build a Docker image for each agent-task pair, run the agent in the container, and download the results once the agent has completed the task.
+To run the harness locally, you will need to install Docker. You can find instructions for installing Docker [here](https://docs.docker.com/engine/install/). If you are running on macOS Sequoia, you may also need to [install Rosetta](https://romanzipp.com/blog/maocs-sequoia-docker-resetta-is-only-intended-to-run-silicon) for Docker to work properly. The harness will automatically build a Docker image for each agent-task pair, run the agent in the container, and download the results once the agent has completed the task.
 
 Please note that the harness runs containers with the `--privileged` flag to allow Docker in Docker (necessary for CORE-Bench-Medium) to work.
 
@@ -73,7 +73,7 @@ For a FAQ on setting up Azure, please see the [Azure FAQ](azure_faq.md). if you 
 # Running the Harness
 To run the `AutoGPT` and `CORE-Bench` agents, you will also need to add your OpenAI API keys to the `agents/AutoGPT-CORE/autogpt/.env` file. A template for this file can be found at `agents/AutoGPT-CORE/autogpt/.env.template`.
 
-The following command runs `CORE-Agent` (gpt-4o) on the first task of the test set not requiring a GPU on `CORE-Bench-Hard`. Include the `--use_azure` flag to run tasks on Azure (otherwise, the tasks will run locally in a Docker container).
+The following command runs `CORE-Agent` (gpt-4o) on the first task of the test set not requiring a GPU on `CORE-Bench-Hard`. Include the `--platform azure` flag to run tasks on Azure (otherwise, the tasks will run locally in a Docker container).
 ```bash
 python3 main.py \
     --experiment_name test_coreagent_gpt4o_c-4 \

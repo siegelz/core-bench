@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument("--resume_path", type=str, default=None, help="Experiment results filename to resume from.")
     parser.add_argument("--include_correct_result_paths", action="store_true", help="Includes a file containing the correct result paths of the results directory in each task to provide signal of correctness to the agent.")
     
-    parser.add_argument("--use_azure", action="store_true", help="Run the benchmark on Azure VMs")
+    parser.add_argument("--platform", type=str, default="local", help="Platform to run the benchmark on", choices=["local", "azure"])
     parser.add_argument("--no_gpu", action="store_true", help="Skip tasks that require a GPU")
     parser.add_argument("--task_limit", type=int, default=None, help="Limit the number of tasks to run")
     parser.add_argument("--keep_vm", action="store_true", help="Do not delete the Azure VM after running the benchmark")
@@ -39,9 +39,9 @@ if __name__ == "__main__":
                                    exp_results_dir = os.path.join(os.getcwd(), "benchmark", "results"),
                                    exp_log_dir = os.path.join(os.getcwd(), "benchmark", "logs"),
                                    resume_results_path = args.resume_path,
-                                   use_azure = args.use_azure,
+                                   platform = args.platform,
                                    delete_vm = not args.keep_vm,
-                                   print_output = not args.use_azure,
+                                   print_output = args.platform == "local",
                                    no_gpu = args.no_gpu,
                                    task_limit = args.task_limit,
                                    delete_envs = not args.keep_temp_envs,
