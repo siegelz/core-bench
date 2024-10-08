@@ -141,6 +141,8 @@ class CodeOceanBenchmark:
 
         if benchmark_level not in ['codeocean_easy', 'codeocean_medium', 'codeocean_hard']:
             raise ValueError(f"Invalid benchmark name: {benchmark_level}.")
+
+        assert os.path.exists(os.path.join(agent_dir, agent_script)), f"Agent script does not exist: {os.path.join(agent_dir, agent_script)}"
     
     def __find_report_path(self, env_path):
         for root, _, files in os.walk(env_path):
