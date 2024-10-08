@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument("--resume_path", type=str, default=None, help="Experiment results filename to resume from.")
     parser.add_argument("--include_correct_result_paths", action="store_true", help="Includes a file containing the correct result paths of the results directory in each task to provide signal of correctness to the agent.")
     
-    parser.add_argument("--platform", type=str, default="local", help="Platform to run the benchmark on")
+    parser.add_argument("--platform", type=str, default="local", help="Platform to run the benchmark on", choices=["local", "azure"])
     parser.add_argument("--no_gpu", action="store_true", help="Skip tasks that require a GPU")
     parser.add_argument("--task_limit", type=int, default=None, help="Limit the number of tasks to run")
     parser.add_argument("--keep_vm", action="store_true", help="Do not delete the Azure VM after running the benchmark")
