@@ -376,7 +376,7 @@ class VirtualMachineManager:
         ssh_private_key = paramiko.RSAKey.from_private_key_file(ssh_private_key_path)
 
         # Connect to the VM using SSH
-        ssh_client.connect(hostname=public_ip_address, username=username, pkey=ssh_private_key, timeout=5)
+        ssh_client.connect(hostname=public_ip_address, username=username, pkey=ssh_private_key, timeout=15)
 
         # Create an SFTP client
         sftp_client = ssh_client.open_sftp()
