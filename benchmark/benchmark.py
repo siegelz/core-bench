@@ -310,7 +310,10 @@ class CodeOceanBenchmark:
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
         
         # Log the agent debug output
-        log_contents = open(os.path.join(task_path, "agent_trace.log"), "r").read()
+        trace_path = os.path.join(task_path, "agent_trace.log")
+        log_contents = ""
+        if os.path.exists(trace_path):
+            log_contents = open(trace_path, "r").read()
         self.__write_task_log(task, log_contents)
 
         # Evaluate the agent and log results
