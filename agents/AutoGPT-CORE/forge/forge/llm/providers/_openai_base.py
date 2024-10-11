@@ -310,7 +310,7 @@ class BaseOpenAIChatProvider(
             kwargs["extra_headers"].update(extra_headers.copy())  # type: ignore
 
         # Replace SYSTEM role with USER role
-        if (model == "OpenAIModelName.O1_PREVIEW_v1" or model == "OpenAIModelName.O1_MINI_v1"):
+        if (str(model) == "OpenAIModelName.O1_PREVIEW_v1" or str(model) == "OpenAIModelName.O1_MINI_v1"):
             for message in prompt_messages:
                 if message.role == ChatMessage.Role.SYSTEM:
                     message.role = ChatMessage.Role.USER
