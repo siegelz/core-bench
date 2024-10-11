@@ -82,7 +82,8 @@ python3 main.py \
     --no_gpu \
     --task_limit 1 \
     --benchmark_level codeocean_hard \
-    --agent_script coreagent_hard_gpt4o.sh
+    --agent_script coreagent_hard_gpt4o.sh \
+    --verbose
 ```
 
 Full details for reproducing the results of the `CORE-Bench` paper can be found in the `reproduce_results.sh` script.
