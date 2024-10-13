@@ -474,7 +474,7 @@ class CodeOceanBenchmark:
     def run(self):
         tasks = []
         i = 0
-        num_tasks = self.task_limit
+        num_tasks = self.task_limit if self.task_limit is not None else len(json.load(open(self.dataset_results_path, "r")))
         while len(tasks) < num_tasks:
             task = CodeOceanTask(json.load(open(self.dataset_results_path, "r"))[i], self.dataset_dir)
             i += 1
