@@ -13,6 +13,7 @@ import tarfile
 
 from benchmark.evaluations import eval_result_json, score_results
 
+
 class CodeOceanTask:
     def __init__(self, task_json, dataset_dir):
         self.__validate_json(task_json)
@@ -30,19 +31,24 @@ class CodeOceanTask:
         self.__download_and_extract_capsule()
 
         # Load the result paths
-        self.result_paths = [x for x in os.walk(os.path.join(self.dataset_dir, self.capsule_id, "results"))]
+        self.result_paths = [
+            x
+            for x in os.walk(os.path.join(self.dataset_dir, self.capsule_id, "results"))
+        ]
 
         # Check if the task uses a GPU and get the registry link
         self.uses_gpu = False
-        with open(os.path.join(self.dataset_dir, self.capsule_id, "REPRODUCING.md"), "r") as f:
+        with open(
+            os.path.join(self.dataset_dir, self.capsule_id, "REPRODUCING.md"), "r"
+        ) as f:
             file = f.read()
             if "gpu" in file:
                 self.uses_gpu = True
-            
-            registry_pattern = r'`(registry\.codeocean\.com/published/[\w-]+:v\d+)`'
+
+            registry_pattern = r"`(registry\.codeocean\.com/published/[\w-]+:v\d+)`"
             match = re.search(registry_pattern, file)
             self.registry_link = match.group(1) if match else None
-    
+
     def __download_and_extract_capsule(self, max_retries=5, backoff_factor=1):
         """
         Downloads a capsule archive from a specified URL if it doesn't exist,
@@ -54,9 +60,11 @@ class CodeOceanTask:
         # Check if the capsule directory already exists
         if not os.path.exists(capsule_dir):
             # Construct the URL for the capsule archive
-            capsule_url = f"https://corebench.cs.princeton.edu/capsules/{self.capsule_id}.tar.gz"
+            capsule_url = (
+                f"https://corebench.cs.princeton.edu/capsules/{self.capsule_id}.tar.gz"
+            )
             tar_path = os.path.join(self.dataset_dir, f"{self.capsule_id}.tar.gz")
-            
+
             # Initialize retry variables
             attempt = 0
             while attempt < max_retries:
@@ -66,12 +74,18 @@ class CodeOceanTask:
                     urllib.request.urlretrieve(capsule_url, tar_path)
                     break  # Exit the loop if download is successful
                 except Exception as e:
-                    print(f"[Benchmark] Error downloading {capsule_url} on attempt {attempt}: {e}")
+                    print(
+                        f"[Benchmark] Error downloading {capsule_url} on attempt {attempt}: {e}"
+                    )
                     if attempt == max_retries:
-                        print("[Benchmark] Maximum download attempts reached. Raising exception.")
+                        print(
+                            "[Benchmark] Maximum download attempts reached. Raising exception."
+                        )
                         raise  # Re-raise the exception after final attempt
                     else:
-                        sleep_time = backoff_factor * (2 ** (attempt - 1))  # Exponential backoff
+                        sleep_time = backoff_factor * (
+                            2 ** (attempt - 1)
+                        )  # Exponential backoff
                         print(f"[Benchmark] Retrying in {sleep_time} seconds...")
                         time.sleep(sleep_time)
 
@@ -91,27 +105,74 @@ class CodeOceanTask:
                 raise  # Re-raise the exception after logging
 
     def __validate_json(self, task_json):
-        assert task_json.keys() == {"field", "language", "capsule_title", "capsule_id", "capsule_doi", "task_prompt", "results"}, f"Invalid task json keys: {task_json.keys()}"
-        assert type(task_json["field"]) == str, f"Field is not a string: {task_json['field']}"
-        assert type(task_json["language"]) == str, f"Language is not a string: {task_json['language']}"
-        assert type(task_json["capsule_title"]) == str, f"Capsule title is not a string: {task_json['capsule_title']}"
-        assert type(task_json["capsule_id"]) == str, f"Capsule id is not a string: {task_json['capsule_id']}"
-        assert type(task_json["capsule_doi"]) == str, f"Capsule DOI is not a string: {task_json['capsule_doi']}"
-        assert type(task_json["task_prompt"]) == str, f"Task prompt is not a string: {task_json['task_prompt']}"
-        assert type(task_json["results"]) == list, f"Capsule results is not a list: {task_json['results']}"
+        assert task_json.keys() == {
+            "field",
+            "language",
+            "capsule_title",
+            "capsule_id",
+            "capsule_doi",
+            "task_prompt",
+            "results",
+        }, f"Invalid task json keys: {task_json.keys()}"
+        assert (
+            type(task_json["field"]) == str
+        ), f"Field is not a string: {task_json['field']}"
+        assert (
+            type(task_json["language"]) == str
+        ), f"Language is not a string: {task_json['language']}"
+        assert (
+            type(task_json["capsule_title"]) == str
+        ), f"Capsule title is not a string: {task_json['capsule_title']}"
+        assert (
+            type(task_json["capsule_id"]) == str
+        ), f"Capsule id is not a string: {task_json['capsule_id']}"
+        assert (
+            type(task_json["capsule_doi"]) == str
+        ), f"Capsule DOI is not a string: {task_json['capsule_doi']}"
+        assert (
+            type(task_json["task_prompt"]) == str
+        ), f"Task prompt is not a string: {task_json['task_prompt']}"
+        assert (
+            type(task_json["results"]) == list
+        ), f"Capsule results is not a list: {task_json['results']}"
         for result in task_json["results"]:
-            assert type(result) == dict, f"Each capsule result is not a dictionary: {result}"
-            assert result.keys() == task_json["results"][0].keys(), f"Capsule results have different keys: {result}"
+            assert (
+                type(result) == dict
+            ), f"Each capsule result is not a dictionary: {result}"
+            assert (
+                result.keys() == task_json["results"][0].keys()
+            ), f"Capsule results have different keys: {result}"
 
     def check_result_paths(self, result_paths):
         gt_files = [file for _, _, files in self.result_paths for file in files]
         report_files = [file for _, _, files in result_paths for file in files]
         for filepath in gt_files:
-            if filepath not in report_files and filepath != 'output': return False
+            if filepath not in report_files and filepath != "output":
+                return False
         return True
 
+
 class CodeOceanBenchmark:
-    def __init__(self, experiment_name, benchmark_level, dataset_results_path, dataset_dir, agent_dir, agent_script, exp_results_dir, exp_log_dir, resume_results_path = None, platform = "local", delete_vm = True, print_output = True, no_gpu = False, task_limit = None, delete_envs = False, include_correct_result_paths = False, verbose = False):
+    def __init__(
+        self,
+        experiment_name,
+        benchmark_level,
+        dataset_results_path,
+        dataset_dir,
+        agent_dir,
+        agent_script,
+        exp_results_dir,
+        exp_log_dir,
+        resume_results_path=None,
+        platform="local",
+        delete_vm=True,
+        print_output=True,
+        no_gpu=False,
+        task_limit=None,
+        delete_envs=False,
+        include_correct_result_paths=False,
+        verbose=False,
+    ):
         self.experiment_name = experiment_name
         self.benchmark_level = benchmark_level
         self.dataset_results_path = dataset_results_path
@@ -124,7 +185,7 @@ class CodeOceanBenchmark:
         self.platform = platform
         self.delete_vm = delete_vm
         self.print_output = print_output
-        self.timestamp = time.strftime('%Y%m%d-%H%M%S', time.localtime())
+        self.timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
         self.no_gpu = no_gpu
         self.task_limit = task_limit
         self.delete_envs = delete_envs
@@ -132,18 +193,33 @@ class CodeOceanBenchmark:
         self.verbose = verbose
 
         if self.resume_results_path:
-            assert os.path.exists(self.resume_results_path), "Resume results path does not exist."
-            assert os.path.splitext(os.path.basename(self.resume_results_path))[0].split("_", 1)[1] == self.benchmark_level, "Benchmark name in resume results path does not match benchmark name."
-            self.timestamp = os.path.splitext(os.path.basename(self.resume_results_path))[0].split("_")[0]
+            assert os.path.exists(
+                self.resume_results_path
+            ), "Resume results path does not exist."
+            assert (
+                os.path.splitext(os.path.basename(self.resume_results_path))[0].split(
+                    "_", 1
+                )[1]
+                == self.benchmark_level
+            ), "Benchmark name in resume results path does not match benchmark name."
+            self.timestamp = os.path.splitext(
+                os.path.basename(self.resume_results_path)
+            )[0].split("_")[0]
 
         if self.platform == "azure":
             self.VMM = VirtualMachineManager()
 
-        if benchmark_level not in ['codeocean_easy', 'codeocean_medium', 'codeocean_hard']:
+        if benchmark_level not in [
+            "codeocean_easy",
+            "codeocean_medium",
+            "codeocean_hard",
+        ]:
             raise ValueError(f"Invalid benchmark name: {benchmark_level}.")
 
-        assert os.path.exists(os.path.join(agent_dir, agent_script)), f"Agent script does not exist: {os.path.join(agent_dir, agent_script)}"
-    
+        assert os.path.exists(
+            os.path.join(agent_dir, agent_script)
+        ), f"Agent script does not exist: {os.path.join(agent_dir, agent_script)}"
+
     def __find_report_path(self, env_path):
         for root, _, files in os.walk(env_path):
             for file in files:
@@ -153,11 +229,15 @@ class CodeOceanBenchmark:
 
     def __write_task_result(self, task, result_report, result_paths):
         # Create results json if filepath doesn't exist, including all directories along the way
-        results_filepath = os.path.join(self.exp_results_dir, self.experiment_name, f"{self.timestamp}_{self.benchmark_level}.json")
+        results_filepath = os.path.join(
+            self.exp_results_dir,
+            self.experiment_name,
+            f"{self.timestamp}_{self.benchmark_level}.json",
+        )
         if not os.path.exists(results_filepath):
-            os.makedirs(os.path.dirname(results_filepath), exist_ok = True)
+            os.makedirs(os.path.dirname(results_filepath), exist_ok=True)
             with open(results_filepath, "w") as f:
-                json.dump({'capsule_results': []}, f, indent = 4)
+                json.dump({"capsule_results": []}, f, indent=4)
 
         # Open results json
         lock = FileLock(f"{results_filepath}.lock")
@@ -185,41 +265,56 @@ class CodeOceanBenchmark:
             "result_paths_success": task.check_result_paths(result_paths),
         }
         capsule_result.update(evals)
-        results['capsule_results'].append(capsule_result)
+        results["capsule_results"].append(capsule_result)
 
         # Write to results json
         with lock:
             with open(results_filepath, "w") as f:
-                json.dump(results, f, indent = 4)
+                json.dump(results, f, indent=4)
 
     def __write_task_log(self, task, log_contents):
-        output_log_path = os.path.join(self.exp_log_dir, self.experiment_name, f"{self.timestamp}_{self.benchmark_level}", f"{task.capsule_id}.log")
+        output_log_path = os.path.join(
+            self.exp_log_dir,
+            self.experiment_name,
+            f"{self.timestamp}_{self.benchmark_level}",
+            f"{task.capsule_id}.log",
+        )
         os.makedirs(os.path.dirname(output_log_path), exist_ok=True)
         with open(output_log_path, "w") as file:
             file.write(log_contents)
 
     def __setup_task_environment(self, task):
         # Copy agent directory to temporary directory
-        task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
-        os.makedirs(task_path, exist_ok = True)
+        task_path = os.path.join(
+            "benchmark",
+            "temp_envs",
+            self.experiment_name,
+            f"{task.capsule_id}-{self.timestamp}",
+        )
+        os.makedirs(task_path, exist_ok=True)
         shutil.rmtree(task_path)
         shutil.copytree(self.agent_dir, task_path)
 
         # Copy capsule to environment
         task_env_path = os.path.join(task_path, "environment")
         task_capsule_path = os.path.join(task_env_path, task.capsule_id)
-        os.makedirs(task_env_path, exist_ok = True)
-        shutil.copytree(os.path.join(self.dataset_dir, task.capsule_id), os.path.join(task_env_path, task.capsule_id))
+        os.makedirs(task_env_path, exist_ok=True)
+        shutil.copytree(
+            os.path.join(self.dataset_dir, task.capsule_id),
+            os.path.join(task_env_path, task.capsule_id),
+        )
 
         # Copy Dockerfile to environment
         # TODO: Modify it with task parameters
-        shutil.copyfile(os.path.join("docker", "Dockerfile"), os.path.join(task_path, "Dockerfile"))
+        shutil.copyfile(
+            os.path.join("docker", "Dockerfile"), os.path.join(task_path, "Dockerfile")
+        )
 
         # Remove files depending on task difficulty
         if self.benchmark_level != "codeocean_easy":
             task_results_path = os.path.join(task_capsule_path, "results")
             shutil.rmtree(task_results_path)
-            os.makedirs(task_results_path, exist_ok = True)
+            os.makedirs(task_results_path, exist_ok=True)
         if self.benchmark_level != "codeocean_medium":
             # Remove the REPRODUCING.md file
             os.remove(os.path.join(task_capsule_path, "REPRODUCING.md"))
@@ -229,18 +324,24 @@ class CodeOceanBenchmark:
 
             # Remove runfile scripts
             if os.path.exists(os.path.join(task_capsule_path, "code", "run.sh")):
-                os.remove(os.path.join(task_capsule_path, "code", "run.sh")) 
+                os.remove(os.path.join(task_capsule_path, "code", "run.sh"))
             if os.path.exists(os.path.join(task_capsule_path, "code", "run")):
                 os.remove(os.path.join(task_capsule_path, "code", "run"))
-        
+
         # Add the result paths
         if self.include_correct_result_paths:
-            result_paths_str = '\n'.join([file for _, _, files in task.result_paths for file in files])
-            with open(os.path.join(task_env_path, "correct_result_paths.txt"), "w") as f:
+            result_paths_str = "\n".join(
+                [file for _, _, files in task.result_paths for file in files]
+            )
+            with open(
+                os.path.join(task_env_path, "correct_result_paths.txt"), "w"
+            ) as f:
                 f.write(result_paths_str)
 
         # Add the task prompt
-        task_str = json.load(open("benchmark/benchmark_prompts.json", "r"))[self.benchmark_level]
+        task_str = json.load(open("benchmark/benchmark_prompts.json", "r"))[
+            self.benchmark_level
+        ]
         task_str = task_str.replace("{task_prompt}", task.task_prompt)
         task_str = task_str.replace("{json_fields}", str(task.results[0].keys()))
         task_str = task_str.replace("{registry_link}", task.registry_link)
@@ -251,43 +352,53 @@ class CodeOceanBenchmark:
     Creates a Docker container, copies the environment and agent to the container, runs the agent,
     and copies the results back for evaluation overwriting the task_path.
     """
+
     def __run_agent_local(self, task, timeout=8100):
         # Path to environment in temp_envs
-        task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
+        task_path = os.path.join(
+            "benchmark",
+            "temp_envs",
+            self.experiment_name,
+            f"{task.capsule_id}-{self.timestamp}",
+        )
 
         # Build the Docker image
         print(f"[Benchmark] Building Docker image for {task.capsule_id}")
         client = docker.from_env()
         client.images.build(
-            path = task_path,
+            path=task_path,
             dockerfile="Dockerfile",
-            tag = f"{task.capsule_id}-{self.timestamp}",
-            rm = True,
+            tag=f"{task.capsule_id}-{self.timestamp}",
+            rm=True,
         )
 
         # Run the agent in the Docker container
         try:
-            print(f"[Benchmark] Running agent in Docker container for {task.capsule_id}")
+            print(
+                f"[Benchmark] Running agent in Docker container for {task.capsule_id}"
+            )
             container = client.containers.run(
-                image = f"{task.capsule_id}-{self.timestamp}",
-                name = f"{task.capsule_id}-{self.timestamp}",
-                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed'",
-                privileged = True,
-                detach = True,
-                stdout = True,
-                stderr = True,
+                image=f"{task.capsule_id}-{self.timestamp}",
+                name=f"{task.capsule_id}-{self.timestamp}",
+                command=f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed'",
+                privileged=True,
+                detach=True,
+                stdout=True,
+                stderr=True,
             )
 
             # Stream the output
             if self.verbose:
                 for line in container.logs(stream=True):
-                    print(line.decode('utf-8').strip())
+                    print(line.decode("utf-8").strip())
 
             # Wait for the container to finish
             container.wait()
 
             # Download results from the Docker container
-            print(f"[Benchmark] Copying files from Docker container for {task.capsule_id}")
+            print(
+                f"[Benchmark] Copying files from Docker container for {task.capsule_id}"
+            )
             stream, _ = container.get_archive("/capsule")
             with open(f"{task_path}.tar", "wb") as f:
                 for chunk in stream:
@@ -300,17 +411,23 @@ class CodeOceanBenchmark:
             os.remove(f"{task_path}.tar")
 
         except KeyboardInterrupt:
-            print(f"[Benchmark] Attempting to gracefully exit and clean up Docker container {container.id}")
+            print(
+                f"[Benchmark] Attempting to gracefully exit and clean up Docker container {container.id}"
+            )
 
         finally:
             container.stop()
             container.remove()
             client.images.remove(f"{task.capsule_id}-{self.timestamp}")
 
-
     def __eval_agent_local(self, task):
-        task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
-        
+        task_path = os.path.join(
+            "benchmark",
+            "temp_envs",
+            self.experiment_name,
+            f"{task.capsule_id}-{self.timestamp}",
+        )
+
         # Log the agent debug output
         trace_path = os.path.join(task_path, "agent_trace.log")
         log_contents = ""
@@ -330,40 +447,53 @@ class CodeOceanBenchmark:
             result_report = {}
 
         self.__write_task_result(
-            task = task,
-            result_report = result_report,
-            result_paths = [x for x in os.walk(os.path.join(task_capsule_path, "results"))]
+            task=task,
+            result_report=result_report,
+            result_paths=[
+                x for x in os.walk(os.path.join(task_capsule_path, "results"))
+            ],
         )
 
     def __start_agent_vm(self, task):
-        from config import SSH_PUBLIC_KEY_PATH, SSH_PRIVATE_KEY_PATH, NETWORK_SECURITY_GROUP_NAME
-        task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
+        from config import (
+            SSH_PUBLIC_KEY_PATH,
+            SSH_PRIVATE_KEY_PATH,
+            NETWORK_SECURITY_GROUP_NAME,
+        )
+
+        task_path = os.path.join(
+            "benchmark",
+            "temp_envs",
+            self.experiment_name,
+            f"{task.capsule_id}-{self.timestamp}",
+        )
 
         # Set up environment locally
         self.__setup_task_environment(task)
 
-        # Create the Azure VM 
+        # Create the Azure VM
         for attempt in range(5):
             try:
                 if task.uses_gpu:
                     print(f"[Benchmark] Creating GPU VM for {task.capsule_id}...")
                     self.VMM.create_gpu_vm(
-                        vm_name = f"{task.capsule_id}-{self.timestamp}",
-                        username = "crab",
-                        ssh_public_key_path = SSH_PUBLIC_KEY_PATH,
-                        network_security_group_name = NETWORK_SECURITY_GROUP_NAME
+                        vm_name=f"{task.capsule_id}-{self.timestamp}",
+                        username="crab",
+                        ssh_public_key_path=SSH_PUBLIC_KEY_PATH,
+                        network_security_group_name=NETWORK_SECURITY_GROUP_NAME,
                     )
                 else:
                     print(f"[Benchmark] Creating standard VM for {task.capsule_id}...")
                     self.VMM.create_vm(
-                        vm_name = f"{task.capsule_id}-{self.timestamp}",
-                        username = "crab",
-                        ssh_public_key_path = SSH_PUBLIC_KEY_PATH,
-                        network_security_group_name = NETWORK_SECURITY_GROUP_NAME
+                        vm_name=f"{task.capsule_id}-{self.timestamp}",
+                        username="crab",
+                        ssh_public_key_path=SSH_PUBLIC_KEY_PATH,
+                        network_security_group_name=NETWORK_SECURITY_GROUP_NAME,
                     )
                 break
             except Exception as e:
-                if attempt == 4: raise Exception(f"Failed to create VM for {task.capsule_id}: {e}")
+                if attempt == 4:
+                    raise Exception(f"Failed to create VM for {task.capsule_id}: {e}")
                 print(f"[Benchmark] Error thrown while creating VM: {e}")
                 time.sleep(10)
 
@@ -374,14 +504,17 @@ class CodeOceanBenchmark:
         for attempt in range(5):
             try:
                 self.VMM.copy_files_to_vm(
-                    source_directory = task_path,
-                    vm_name = f"{task.capsule_id}-{self.timestamp}",
-                    username = "crab",
-                    ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
+                    source_directory=task_path,
+                    vm_name=f"{task.capsule_id}-{self.timestamp}",
+                    username="crab",
+                    ssh_private_key_path=SSH_PRIVATE_KEY_PATH,
                 )
                 break
             except Exception as e:
-                if attempt == 4: raise Exception(f"Failed to copy files to VM for {task.capsule_id}: {e}")
+                if attempt == 4:
+                    raise Exception(
+                        f"Failed to copy files to VM for {task.capsule_id}: {e}"
+                    )
                 time.sleep(10)
 
         # Start the agent on Azure
@@ -389,33 +522,45 @@ class CodeOceanBenchmark:
         for attempt in range(5):
             try:
                 self.VMM.run_agent_on_vm(
-                    agent_script = self.agent_script,
-                    vm_name = f"{task.capsule_id}-{self.timestamp}",
-                    username = "crab",
-                    ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
+                    agent_script=self.agent_script,
+                    vm_name=f"{task.capsule_id}-{self.timestamp}",
+                    username="crab",
+                    ssh_private_key_path=SSH_PRIVATE_KEY_PATH,
                 )
                 break
             except Exception as e:
-                if attempt == 4: raise Exception(f"Failed to run agent on VM for {task.capsule_id}: {e}")
+                if attempt == 4:
+                    raise Exception(
+                        f"Failed to run agent on VM for {task.capsule_id}: {e}"
+                    )
                 time.sleep(10)
 
     def __eval_agent_vm(self, task):
         try:
             from config import SSH_PRIVATE_KEY_PATH
-            task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
+
+            task_path = os.path.join(
+                "benchmark",
+                "temp_envs",
+                self.experiment_name,
+                f"{task.capsule_id}-{self.timestamp}",
+            )
 
             for attempt in range(5):
                 try:
                     log_contents = self.VMM.check_task_completion(
-                        vm_name = f"{task.capsule_id}-{self.timestamp}",
-                        username = "crab",
-                        ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
-                        task_completed_filename = "task_completed",
-                        agent_trace_filename = "agent_trace.log"
+                        vm_name=f"{task.capsule_id}-{self.timestamp}",
+                        username="crab",
+                        ssh_private_key_path=SSH_PRIVATE_KEY_PATH,
+                        task_completed_filename="task_completed",
+                        agent_trace_filename="agent_trace.log",
                     )
                     break
                 except Exception as e:
-                    if attempt == 4: raise Exception(f"Failed to check task completion on VM for {task.capsule_id}: {e}")
+                    if attempt == 4:
+                        raise Exception(
+                            f"Failed to check task completion on VM for {task.capsule_id}: {e}"
+                        )
                     time.sleep(10)
             if log_contents is None:
                 raise Exception(f"Agent is not finished on {task.capsule_id}")
@@ -429,14 +574,17 @@ class CodeOceanBenchmark:
             for attempt in range(5):
                 try:
                     self.VMM.copy_files_from_vm(
-                        destination_directory = task_path,
-                        vm_name = f"{task.capsule_id}-{self.timestamp}",
-                        username = "crab",
-                        ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
+                        destination_directory=task_path,
+                        vm_name=f"{task.capsule_id}-{self.timestamp}",
+                        username="crab",
+                        ssh_private_key_path=SSH_PRIVATE_KEY_PATH,
                     )
                     break
                 except Exception as e:
-                    if attempt == 4: raise Exception(f"Failed to copy files from VM for {task.capsule_id}: {e}")
+                    if attempt == 4:
+                        raise Exception(
+                            f"Failed to copy files from VM for {task.capsule_id}: {e}"
+                        )
                     time.sleep(10)
 
             # Evaluate the agent
@@ -445,16 +593,20 @@ class CodeOceanBenchmark:
 
             try:
                 if self.__find_report_path(task_env_path) is not None:
-                    result_report = json.load(open(self.__find_report_path(task_env_path)))
+                    result_report = json.load(
+                        open(self.__find_report_path(task_env_path))
+                    )
                 else:
                     result_report = {}
             except:
                 result_report = {}
 
             self.__write_task_result(
-                task = task,
-                result_report = result_report,
-                result_paths = [x for x in os.walk(os.path.join(task_capsule_path, "results"))]
+                task=task,
+                result_report=result_report,
+                result_paths=[
+                    x for x in os.walk(os.path.join(task_capsule_path, "results"))
+                ],
             )
         except Exception as e:
             print(f"[Benchmark] Evaluation error thrown: {e}")
@@ -464,19 +616,32 @@ class CodeOceanBenchmark:
             # Delete the Azure VM
             if self.delete_vm:
                 print(f"[Benchmark] Deleting the VM for {task.capsule_id}...")
-                concurrent.futures.ThreadPoolExecutor().submit(self.VMM.delete_vm, vm_name = f"{task.capsule_id}-{self.timestamp}")
+                concurrent.futures.ThreadPoolExecutor().submit(
+                    self.VMM.delete_vm, vm_name=f"{task.capsule_id}-{self.timestamp}"
+                )
 
             # Clean up
             if self.delete_envs:
-                task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
+                task_path = os.path.join(
+                    "benchmark",
+                    "temp_envs",
+                    self.experiment_name,
+                    f"{task.capsule_id}-{self.timestamp}",
+                )
                 shutil.rmtree(task_path)
 
     def run(self):
         tasks = []
         i = 0
-        num_tasks = self.task_limit if self.task_limit is not None else len(json.load(open(self.dataset_results_path, "r")))
+        num_tasks = (
+            self.task_limit
+            if self.task_limit is not None
+            else len(json.load(open(self.dataset_results_path, "r")))
+        )
         while len(tasks) < num_tasks:
-            task = CodeOceanTask(json.load(open(self.dataset_results_path, "r"))[i], self.dataset_dir)
+            task = CodeOceanTask(
+                json.load(open(self.dataset_results_path, "r"))[i], self.dataset_dir
+            )
             i += 1
 
             # Skip tasks that require a GPU
@@ -486,8 +651,15 @@ class CodeOceanBenchmark:
             # Skip tasks that are already in the results
             if self.resume_results_path is not None:
                 if not os.path.exists(self.resume_results_path):
-                    raise Exception(f"Resume results path does not exist: {self.resume_results_path}")
-                if task.capsule_id in [result["capsule_id"] for result in json.load(open(self.resume_results_path, "r"))['capsule_results']]:
+                    raise Exception(
+                        f"Resume results path does not exist: {self.resume_results_path}"
+                    )
+                if task.capsule_id in [
+                    result["capsule_id"]
+                    for result in json.load(open(self.resume_results_path, "r"))[
+                        "capsule_results"
+                    ]
+                ]:
                     num_tasks -= 1
                     continue
 
@@ -497,18 +669,29 @@ class CodeOceanBenchmark:
             from config import SSH_PRIVATE_KEY_PATH
 
             # Constants
-            AGENT_STARTUP_TIMEOUT = 60 * 60 # Max time to wait for a task VM to be created before timing out
-            MAX_CONSEC_ATTEMPTS = 20 # Max number of consecutive attempts to download results before giving up
-            MAX_WORKERS = 20 # Max number of VMs to concurrently upload/download files from
+            AGENT_STARTUP_TIMEOUT = (
+                60 * 60
+            )  # Max time to wait for a task VM to be created before timing out
+            MAX_CONSEC_ATTEMPTS = 20  # Max number of consecutive attempts to download results before giving up
+            MAX_WORKERS = (
+                20  # Max number of VMs to concurrently upload/download files from
+            )
 
             print("======== Creating VMs ========\n")
 
             # Start Azure VMs concurrently
             running_agents = []
             try:
-                with concurrent.futures.ThreadPoolExecutor(max_workers = MAX_WORKERS) as executor:
-                    future_to_task = {executor.submit(self.__start_agent_vm, task): task for task in tasks}
-                    for future in concurrent.futures.as_completed(future_to_task, timeout = AGENT_STARTUP_TIMEOUT):
+                with concurrent.futures.ThreadPoolExecutor(
+                    max_workers=MAX_WORKERS
+                ) as executor:
+                    future_to_task = {
+                        executor.submit(self.__start_agent_vm, task): task
+                        for task in tasks
+                    }
+                    for future in concurrent.futures.as_completed(
+                        future_to_task, timeout=AGENT_STARTUP_TIMEOUT
+                    ):
                         task = future_to_task[future]
                         try:
                             future.result()
@@ -521,7 +704,11 @@ class CodeOceanBenchmark:
                 print(f"[Benchmark] An unexpected error occurred: {e}")
 
             # Print agents that failed to start
-            failed_agents = [{task.capsule_id: "Failed to start VM"} for task in tasks if task.capsule_id not in running_agents]
+            failed_agents = [
+                {task.capsule_id: "Failed to start VM"}
+                for task in tasks
+                if task.capsule_id not in running_agents
+            ]
             if len(failed_agents) > 0:
                 print(f"[Benchmark] Failed to start the following agents:")
                 for failed_agent in failed_agents:
@@ -535,20 +722,22 @@ class CodeOceanBenchmark:
             task_queue = queue.Queue()
             for task in tasks:
                 task_queue.put(task)
-            
+
             consec_download_fails = {task.capsule_id: 0 for task in tasks}
             futures = []
-            with concurrent.futures.ThreadPoolExecutor(max_workers = MAX_WORKERS) as executor:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=MAX_WORKERS
+            ) as executor:
                 while not task_queue.empty():
                     task = task_queue.get()
                     try:
                         # Check if the task has completed
                         log_contents = self.VMM.check_task_completion(
-                            vm_name = f"{task.capsule_id}-{self.timestamp}",
-                            username = "crab",
-                            ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
-                            task_completed_filename = "task_completed",
-                            agent_trace_filename = "agent_trace.log"
+                            vm_name=f"{task.capsule_id}-{self.timestamp}",
+                            username="crab",
+                            ssh_private_key_path=SSH_PRIVATE_KEY_PATH,
+                            task_completed_filename="task_completed",
+                            agent_trace_filename="agent_trace.log",
                         )
                         consec_download_fails[task.capsule_id] = 0
                         if log_contents is not None:
@@ -562,14 +751,23 @@ class CodeOceanBenchmark:
                         if consec_download_fails[task.capsule_id] < MAX_CONSEC_ATTEMPTS:
                             task_queue.put(task)
                         else:
-                            print(f"[Benchmark] Failed to connect to VM for {task.capsule_id} after {MAX_CONSEC_ATTEMPTS} attempts: {e}")
-                            print(f"[Benchmark] Deleting the VM for {task.capsule_id}...")
-                            failed_agents.append({task.capsule_id: "Failed to download results"})
+                            print(
+                                f"[Benchmark] Failed to connect to VM for {task.capsule_id} after {MAX_CONSEC_ATTEMPTS} attempts: {e}"
+                            )
+                            print(
+                                f"[Benchmark] Deleting the VM for {task.capsule_id}..."
+                            )
+                            failed_agents.append(
+                                {task.capsule_id: "Failed to download results"}
+                            )
                             if self.delete_vm:
-                                concurrent.futures.ThreadPoolExecutor().submit(self.VMM.delete_vm, vm_name = f"{task.capsule_id}-{self.timestamp}")
+                                concurrent.futures.ThreadPoolExecutor().submit(
+                                    self.VMM.delete_vm,
+                                    vm_name=f"{task.capsule_id}-{self.timestamp}",
+                                )
 
                     time.sleep(1)
-                    
+
                 # Wait for all tasks to finish
                 concurrent.futures.wait(futures)
 
@@ -588,12 +786,23 @@ class CodeOceanBenchmark:
                 self.__eval_agent_local(task)
 
                 if self.delete_envs:
-                    task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
+                    task_path = os.path.join(
+                        "benchmark",
+                        "temp_envs",
+                        self.experiment_name,
+                        f"{task.capsule_id}-{self.timestamp}",
+                    )
                     shutil.rmtree(task_path)
 
         # Score and print results
-        results_filepath = os.path.join(self.exp_results_dir, self.experiment_name, f"{self.timestamp}_{self.benchmark_level}.json")
-        score_results(results_filepath, verbose = True)
+        results_filepath = os.path.join(
+            self.exp_results_dir,
+            self.experiment_name,
+            f"{self.timestamp}_{self.benchmark_level}.json",
+        )
+        score_results(results_filepath, verbose=True)
 
         if self.platform == "azure":
-            print("[Benchmark] Warning: Terminating the program early may not delete all associated Azure resources.")
+            print(
+                "[Benchmark] Warning: Terminating the program early may not delete all associated Azure resources."
+            )
