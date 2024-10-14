@@ -115,6 +115,12 @@ class _BaseOpenAIProvider(BaseModelProvider[_ModelName, _ModelProviderSettings])
         return f"{self.__class__.__name__}()"
 
 
+o1_model_names = [
+    "OpenAIModelName.O1_PREVIEW_v1",
+    "OpenAIModelName.O1_MINI_v1",
+    "o1-preview-2024-09-12",
+    "o1-mini-2024-09-12",
+]
 class BaseOpenAIChatProvider(
     _BaseOpenAIProvider[_ModelName, _ModelProviderSettings],
     BaseChatModelProvider[_ModelName, _ModelProviderSettings],
@@ -254,7 +260,7 @@ class BaseOpenAIChatProvider(
                     )
                     openai_messages.append(
                         {
-                            "role": "system",
+                            "role": "system" if model_name not in o1_model_names else "user",
                             "content": (
                                 f"ERROR PARSING YOUR RESPONSE:\n\n{parse_errors_fmt}"
                             ),
@@ -287,13 +293,6 @@ class BaseOpenAIChatProvider(
             CompletionCreateParams: Mapping of other kwargs for the API call
             Mapping[str, Any]: Any keyword arguments to pass on to the completion parser
         """
-        o1_model_names = [
-            "OpenAIModelName.O1_PREVIEW_v1",
-            "OpenAIModelName.O1_MINI_v1",
-            "o1-preview-2024-09-12",
-            "o1-mini-2024-09-12",
-        ]
-
         kwargs = cast(CompletionCreateParams, kwargs)
 
         if max_output_tokens and str(model) not in o1_model_names:
