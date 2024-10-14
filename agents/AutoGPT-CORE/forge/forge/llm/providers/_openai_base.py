@@ -287,10 +287,17 @@ class BaseOpenAIChatProvider(
             CompletionCreateParams: Mapping of other kwargs for the API call
             Mapping[str, Any]: Any keyword arguments to pass on to the completion parser
         """
+        o1_model_names = [
+            "OpenAIModelName.O1_PREVIEW_v1",
+            "OpenAIModelName.O1_MINI_v1",
+            "o1-preview-2024-09-12",
+            "o1-mini-2024-09-12",
+        ]
+
         kwargs = cast(CompletionCreateParams, kwargs)
 
-        if max_output_tokens:
-            kwargs["max_tokens"] = max_output_tokens
+        if max_output_tokens and str(model) not in o1_model_names:
+                kwargs["max_tokens"] = max_output_tokens
 
         if functions:
             kwargs["tools"] = [  # pyright: ignore - it fails to infer the dict type
@@ -308,6 +315,15 @@ class BaseOpenAIChatProvider(
             # 'extra_headers' is not on CompletionCreateParams, but is on chat.create()
             kwargs["extra_headers"] = kwargs.get("extra_headers", {})  # type: ignore
             kwargs["extra_headers"].update(extra_headers.copy())  # type: ignore
+
+        # Specific modifications for o1 based models
+        print("Model Name: ", model)
+        if str(model) in o1_model_names:
+            print("Performing O1 specific modifications")
+            kwargs["temperature"] = 1.0
+            for message in prompt_messages:
+                if message.role == ChatMessage.Role.SYSTEM:
+                    message.role = ChatMessage.Role.USER
 
         prepped_messages: list[ChatCompletionMessageParam] = [
             message.dict(  # type: ignore

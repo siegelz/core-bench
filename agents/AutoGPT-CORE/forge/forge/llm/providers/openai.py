@@ -80,6 +80,12 @@ class OpenAIModelName(str, enum.Enum):
     GPT4_O_mini_v1 = "gpt-4o-mini-2024-07-18"
     GPT4_O_mini = GPT4_O_mini_v1
 
+    O1_PREVIEW_v1 = "o1-preview-2024-09-12"
+    O1_PREVIEW = O1_PREVIEW_v1
+
+    O1_MINI_v1 = "o1-mini-2024-09-12"
+    O1_MINI = O1_MINI_v1
+
 
 OPEN_AI_EMBEDDING_MODELS = {
     info.name: info
@@ -184,6 +190,22 @@ OPEN_AI_CHAT_MODELS = {
             max_tokens=128_000,
             has_function_call_api=True,
         ),
+        ChatModelInfo(
+            name=OpenAIModelName.O1_PREVIEW,
+            provider_name=ModelProviderName.OPENAI,
+            prompt_token_cost=15 / 1_000_000,
+            completion_token_cost=60 / 1_000_000,
+            max_tokens=128_000,
+            has_function_call_api=False,
+        ),
+        ChatModelInfo(
+            name=OpenAIModelName.O1_MINI,
+            provider_name=ModelProviderName.OPENAI,
+            prompt_token_cost=3 / 1_000_000,
+            completion_token_cost=12 / 1_000_000,
+            max_tokens=128_000,
+            has_function_call_api=False,
+        ),
     ]
 }
 # Copy entries for models with equivalent specs
@@ -206,6 +228,8 @@ chat_model_mapping = {
     ],
     OpenAIModelName.GPT4_O: [OpenAIModelName.GPT4_O_v1],
     OpenAIModelName.GPT4_O_mini: [OpenAIModelName.GPT4_O_mini_v1],
+    OpenAIModelName.O1_PREVIEW: [OpenAIModelName.O1_PREVIEW_v1],
+    OpenAIModelName.O1_MINI: [OpenAIModelName.O1_MINI_v1],
 }
 for base, copies in chat_model_mapping.items():
     for copy in copies:

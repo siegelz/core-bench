@@ -473,10 +473,11 @@ class CodeOceanBenchmark:
 
     def run(self):
         tasks = []
-        task_count = 0
-        while len(tasks) < self.task_limit:
-            task = CodeOceanTask(json.load(open(self.dataset_results_path, "r"))[task_count], self.dataset_dir)
-            task_count += 1
+        i = 0
+        num_tasks = self.task_limit if self.task_limit is not None else len(json.load(open(self.dataset_results_path, "r")))
+        while len(tasks) < num_tasks:
+            task = CodeOceanTask(json.load(open(self.dataset_results_path, "r"))[i], self.dataset_dir)
+            i += 1
 
             # Skip tasks that require a GPU
             if self.no_gpu and task.uses_gpu:
@@ -487,6 +488,7 @@ class CodeOceanBenchmark:
                 if not os.path.exists(self.resume_results_path):
                     raise Exception(f"Resume results path does not exist: {self.resume_results_path}")
                 if task.capsule_id in [result["capsule_id"] for result in json.load(open(self.resume_results_path, "r"))['capsule_results']]:
+                    num_tasks -= 1
                     continue
 
             tasks.append(task)

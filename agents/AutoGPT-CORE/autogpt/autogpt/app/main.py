@@ -69,6 +69,8 @@ COST_DICT = {
                 "gpt-4-turbo": {"prompt_tokens": 10/1e6, "completion_tokens": 30/1e6},
                 "gpt-4o-mini-2024-07-18": {"prompt_tokens": 0.15/1e6, "completion_tokens": 1/1e6},
                 "gpt-4o-mini": {"prompt_tokens": 0.15/1e6, "completion_tokens": 1/1e6},
+                "o1-preview-2024-09-12": {"prompt_tokens": 15/1e6, "completion_tokens": 60/1e6},
+                "o1-mini-2024-09-12": {"prompt_tokens": 3/1e6, "completion_tokens": 12/1e6},
             }
 
 
