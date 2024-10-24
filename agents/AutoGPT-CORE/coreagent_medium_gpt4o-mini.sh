@@ -52,16 +52,6 @@ sudo ln -s $(pwd)/environment/$cap_subdir/code /code
 sudo ln -s $(pwd)/environment/$cap_subdir/data /data
 sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 
-# WORKAROUND: Run the agent to trigger setup (this will fail but we are restarting the agent later)
-. autogpt.sh run --ai-task "Write the current temperature in Princeton to a txt file. Create a file report.json file in your workspace and write some random content in it." --ai-name $cap_subdir --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-mini-2024-07-18" --fast_llm "gpt-4o-mini-2024-07-18" --smart_llm "gpt-4o-mini-2024-07-18" --programmatic_key_check
-
-sudo poetry install
-
-# Install additional dependencies that are in conflict with poetry but still work
-source $(poetry env info --path)/bin/activate
-pip install duckduckgo_search httpx -U
-pip install weave==0.50.5
-
 # Run the agent
 . autogpt.sh run \
   --ai-task "$task_prompt" \
