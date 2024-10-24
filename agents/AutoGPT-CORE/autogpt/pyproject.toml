@@ -39,7 +39,7 @@ numpy = "1.26.4"
 openai = "^1.7.2"
 orjson = "^3.8.10"
 Pillow = "*"
-pydantic = "*"
+pydantic = "^2.9.2"
 python-docx = "*"
 python-dotenv = "^1.0.0"
 pyyaml = "^6.0"
@@ -48,9 +48,12 @@ requests = "*"
 sentry-sdk = "^1.40.4"
 spacy = "^3.7.4"
 tenacity = "^8.2.2"
+httpx = "^0.27.2"
+duckduckgo_search = "^6.3.0"
+weave = "^0.50.5"
 
 # OpenAI and Generic plugins import
-openapi-python-client = "^0.14.0"
+# openapi-python-client = "^0.14.0"
 
 # Benchmarking
 agbenchmark = { path = "../benchmark", optional = true }
