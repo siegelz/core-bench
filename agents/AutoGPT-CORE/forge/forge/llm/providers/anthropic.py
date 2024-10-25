@@ -41,6 +41,7 @@ _P = ParamSpec("_P")
 
 
 class AnthropicModelName(str, enum.Enum):
+    CLAUDE35_SONNET_v1 = "claude-3-5-sonnet-20241022"
     CLAUDE3_OPUS_v1 = "claude-3-opus-20240229"
     CLAUDE3_SONNET_v1 = "claude-3-sonnet-20240229"
     CLAUDE3_HAIKU_v1 = "claude-3-haiku-20240307"
@@ -49,6 +50,14 @@ class AnthropicModelName(str, enum.Enum):
 ANTHROPIC_CHAT_MODELS = {
     info.name: info
     for info in [
+        ChatModelInfo(
+            name=AnthropicModelName.CLAUDE35_SONNET_v1,
+            provider_name=ModelProviderName.ANTHROPIC,
+            prompt_token_cost=3 / 1e6,
+            completion_token_cost=15 / 1e6,
+            max_tokens=200000,
+            has_function_call_api=True,
+        ),
         ChatModelInfo(
             name=AnthropicModelName.CLAUDE3_OPUS_v1,
             provider_name=ModelProviderName.ANTHROPIC,
@@ -443,7 +452,7 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
         @self._retry_api_request
         async def _create_chat_completion_with_retry() -> Message:
             return await self._client.beta.tools.messages.create(
-                model=model, **completion_kwargs  # type: ignore
+                **completion_kwargs  # type: ignore
             )
 
         response = await _create_chat_completion_with_retry()
