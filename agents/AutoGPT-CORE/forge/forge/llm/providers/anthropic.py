@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import logging
+import time
 from typing import TYPE_CHECKING, Any, Callable, Optional, ParamSpec, Sequence, TypeVar
 
 import sentry_sdk
@@ -454,14 +455,29 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
             return await self._client.beta.tools.messages.create(
                 **completion_kwargs  # type: ignore
             )
-
+        
+        start_time = time.time()
         response = await _create_chat_completion_with_retry()
+        end_time = time.time()
 
         cost = self._budget.update_usage_and_cost(
             model_info=ANTHROPIC_CHAT_MODELS[model],
             input_tokens_used=response.usage.input_tokens,
             output_tokens_used=response.usage.output_tokens,
         )
+
+        self._logger.info("Anthropic API call", extra={
+            "model_name": completion_kwargs["model"],
+            "input_messages": completion_kwargs.get("messages"),
+            "output_messages": response.content[0].text,
+            "inference_time": end_time - start_time,
+            "prompt_tokens": response.usage.input_tokens,
+            "completion_tokens": response.usage.output_tokens,
+            "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
+            "temperature": completion_kwargs.get("temperature", 0.0),
+            "type": "api_call",
+        })
+
         return response, cost, response.usage.input_tokens, response.usage.output_tokens
 
     def _parse_assistant_tool_calls(
