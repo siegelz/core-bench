@@ -505,7 +505,7 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
                 )
             ),
             wait=tenacity.wait_exponential(),
-            stop=tenacity.stop_after_attempt(self._configuration.retries_per_request),
+            stop=tenacity.stop_after_attempt(7),
             after=tenacity.after_log(self._logger, logging.DEBUG),
         )(func)
 
