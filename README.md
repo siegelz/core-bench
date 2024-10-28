@@ -5,8 +5,6 @@ To successfully complete a task, the agent must read the task prompt and questio
 
 ![Local Image](./images/benchmark_overview.png)
 
-You can find the CORE-Bench [paper here](https://arxiv.org/abs/2409.11363) and view the [dataset here](https://huggingface.co/datasets/siegelz/core-bench).
-
 ## Harness Description
 This harness allows you to easily evaluate your own agents, or the `AutoGPT` and `CORE-Bench` agents, on the `CORE-Bench` dataset. The harness runs agents in an isolated environment (either locally in a Docker container or on an Azure VM). The harness also provides a simple interface for adding new agents to the benchmark.
 
@@ -15,7 +13,6 @@ If you are interested in generating figures and tables from the `CORE-Bench` pap
 # Installation and Setup
 The harness has been tested with Python 3.9. Clone the repository and install the required packages:
 ```bash
-git clone https://github.com/siegelz/core-bench.git && cd core-bench
 conda create --name core-bench python=3.9
 conda activate core-bench
 pip3 install -r requirements.txt
