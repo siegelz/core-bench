@@ -84,11 +84,9 @@ class CodeOceanTask:
             while attempt < max_retries:
                 try:
                     attempt += 1
-                    print(f"[Benchmark] Downloading {capsule_url} to {tar_path}...")
                     urllib.request.urlretrieve(capsule_url, tar_path)
                     break  # Exit the loop if download is successful
                 except Exception as e:
-                    print(f"[Benchmark] Error downloading {capsule_url} on attempt {attempt}: {e}")
                     if attempt == max_retries:
                         print("[Benchmark] Maximum download attempts reached. Raising exception.")
                         raise  # Re-raise the exception after final attempt
