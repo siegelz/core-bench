@@ -1,14 +1,3 @@
-<p align="center">
-    <a href="https://arxiv.org/abs/2409.11363">
-    <img alt="Paper" src="https://img.shields.io/badge/arXiv-arXiv:2409.11363-b31b1b.svg">
-    <a href = "https://agent-evals-core-leaderboard.hf.space">
-    <img alt="Leaderboard" src="https://img.shields.io/badge/Leaderboard-Link-blue.svg">
-    <a href = "https://github.com/siegelz/core-bench">
-    <img alt="GitHub" src="https://img.shields.io/badge/GitHub-Repository-181717.svg">
-    <a href="https://huggingface.co/datasets/siegelz/core-bench">
-    <img alt="Dataset" src="https://img.shields.io/badge/Hugging%20Face-Dataset-yellow.svg">
-</p>
-
 # CORE-Bench Overview
 `CORE-Bench` is a benchmark for evaluating the ability of agents to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
 
@@ -23,9 +12,6 @@ This harness allows you to easily evaluate your own agents, or the `AutoGPT` and
 
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
-## Leaderboard
-You can view the `CORE-Bench` leaderboard [here](https://agent-evals-core-leaderboard.hf.space). To submit your agent to the leaderboard, you must run it on this harness and follow the [instructions here](https://agent-evals-core-leaderboard.hf.space).
-
 # Installation and Setup
 The harness has been tested with Python 3.9. Clone the repository and install the required packages:
 ```bash
@@ -39,8 +25,6 @@ Next, you will need to decrypt `benchmark/dataset/core_test.json.gpg` to access 
 ```bash
 gpg --output benchmark/dataset/core_test.json --decrypt benchmark/dataset/core_test.json.gpg
 ```
-
-Note that the dataset JSON files contain the task prompts, task questions, and some other metadata for each task, not the associated code repositories. The harness automatically downloads the code repositories for each task from https://corebench.cs.princeton.edu/capsules/capsule-XXXXXXX.tar.gz, where `XXXXXXX` is the `capsule_id`.
 
 You have two options for running the harness: in a Docker container locally or on an Azure VM. Running on Azure allows you to parrallelize tasks and run the benchmark at scale, but running locally could be easier for testing or development purposes. Please follow the instructions below for your desired setup (or both).
 

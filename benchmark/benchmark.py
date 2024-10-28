@@ -13,6 +13,28 @@ import tarfile
 
 from benchmark.evaluations import eval_result_json, score_results
 
+from cryptography.fernet import Fernet
+import base64
+import hashlib
+
+# Custom key string
+custom_key_string = "core-bench"
+
+# Create a key using SHA-256 hash and base64 encode it to make it URL-safe
+key = base64.urlsafe_b64encode(hashlib.sha256(custom_key_string.encode()).digest())
+
+# Create a Fernet cipher suite with the custom key
+cipher_suite = Fernet(key)
+
+def encrypt(text):
+    """Encrypt a string and return the encrypted text."""
+    encrypted_text = cipher_suite.encrypt(text.encode())
+    return encrypted_text.decode()
+
+def decrypt(encrypted_text):
+    """Decrypt an encrypted string and return the original text."""
+    decrypted_text = cipher_suite.decrypt(encrypted_text.encode()).decode()
+    return decrypted_text
 class CodeOceanTask:
     def __init__(self, task_json, dataset_dir):
         self.__validate_json(task_json)
@@ -54,7 +76,7 @@ class CodeOceanTask:
         # Check if the capsule directory already exists
         if not os.path.exists(capsule_dir):
             # Construct the URL for the capsule archive
-            capsule_url = f"https://corebench.cs.princeton.edu/capsules/{self.capsule_id}.tar.gz"
+            capsule_url = decrypt("gAAAAABm71T-Cs1qMQMN0S6AWJ4rRFNM3ukgMrW5138jgXqXsfeLYalq5sulzYedNfjqdId3bgf4AF6LN5YgAXFUUqkFwso31dmgMzcUX-8iap2g0jBTAgBZLesYzOjsid4pbeouK73w5NHwl0Fx6cH3lZeQs-QEgDfYwRmPOElBGLcv7UTYBXM=").replace("{self.capsule_id}", self.capsule_id)
             tar_path = os.path.join(self.dataset_dir, f"{self.capsule_id}.tar.gz")
             
             # Initialize retry variables
