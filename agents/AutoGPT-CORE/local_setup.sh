@@ -14,7 +14,7 @@ mv environment autogpt/environment
 cd autogpt
 
 # WORKAROUND: Run the agent to trigger setup (this will fail but we are restarting the agent later)
-. autogpt.sh run --ai-task "Write the current temperature in Princeton to a txt file. Create a file report.json file in your workspace and write some random content in it." --ai-name . --skip-reprompt --continuous --log-level DEBUG
+. autogpt.sh run --ai-task "Write the current temperature in New York to a txt file. Create a file report.json file in your workspace and write some random content in it." --ai-name . --skip-reprompt --continuous --log-level DEBUG
 
 sudo poetry install
 
