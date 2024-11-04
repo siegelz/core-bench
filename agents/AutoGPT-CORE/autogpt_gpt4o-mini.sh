@@ -53,7 +53,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/data /data
 sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 
 # Run the agent
-. autogpt.sh run --ai-task "$task_prompt" --ai-name $cap_subdir --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-mini-2024-07-18" --fast_llm "gpt-4o-mini-2024-07-18" --smart_llm "gpt-4o-mini-2024-07-18" --openai_cost_budget 4
+. autogpt.sh run --ai-task "$task_prompt" --ai-name "${cap_subdir}_autogpt_gpt4o-mini" --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-mini-2024-07-18" --fast_llm "gpt-4o-mini-2024-07-18" --smart_llm "gpt-4o-mini-2024-07-18" --openai_cost_budget 4
 
 cd ..
 mv autogpt/environment .
