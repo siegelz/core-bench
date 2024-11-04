@@ -4,7 +4,7 @@ import enum
 import logging
 import time
 from typing import TYPE_CHECKING, Any, Callable, Optional, ParamSpec, Sequence, TypeVar
-
+import weave
 import sentry_sdk
 import tenacity
 import tiktoken
@@ -451,13 +451,14 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
         """
 
         @self._retry_api_request
-        async def _create_chat_completion_with_retry() -> Message:
+        @weave.op()
+        async def _create_chat_completion_with_retry(**completion_kwargs) -> Message:
             return await self._client.beta.tools.messages.create(
                 **completion_kwargs  # type: ignore
             )
         
         start_time = time.time()
-        response = await _create_chat_completion_with_retry()
+        response = await _create_chat_completion_with_retry(**completion_kwargs)
         end_time = time.time()
 
         cost = self._budget.update_usage_and_cost(

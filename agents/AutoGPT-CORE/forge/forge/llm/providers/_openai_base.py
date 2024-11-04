@@ -11,7 +11,7 @@ from typing import (
     TypeVar,
     cast,
 )
-
+import weave
 import sentry_sdk
 import tenacity
 from openai._exceptions import APIConnectionError, APIStatusError
@@ -359,12 +359,13 @@ class BaseOpenAIChatProvider(
         completion_kwargs["model"] = completion_kwargs.get("model") or model
         start_time = time.time()
         @self._retry_api_request
-        async def _create_chat_completion_with_retry() -> ChatCompletion:
+        @weave.op()
+        async def _create_chat_completion_with_retry(**completion_kwargs) -> ChatCompletion:
             return await self._client.chat.completions.create(
                 **completion_kwargs,  # type: ignore
             )
 
-        completion = await _create_chat_completion_with_retry()
+        completion = await _create_chat_completion_with_retry(**completion_kwargs)
 
         end_time = time.time()
         if completion.usage:
