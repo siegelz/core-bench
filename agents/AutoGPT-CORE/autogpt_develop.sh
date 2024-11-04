@@ -52,7 +52,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/code /code
 sudo ln -s $(pwd)/environment/$cap_subdir/data /data
 sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 
-. autogpt.sh run --ai-task "$task_prompt" --ai-name $cap_subdir --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-2024-05-13" --fast_llm "claude-3-5-sonnet-20241022" --smart_llm "claude-3-5-sonnet-20241022"  --openai_cost_budget 4
+. autogpt.sh run --ai-task "What's the weather in Princeton, NJ?" --ai-name "AutoGPT_Develop" --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-2024-05-13" --fast_llm "claude-3-5-sonnet-20241022" --smart_llm "claude-3-5-sonnet-20241022"  --openai_cost_budget 4
 
 sleep infinity
 
