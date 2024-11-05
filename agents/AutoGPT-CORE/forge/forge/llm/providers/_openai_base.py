@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import (
     Any,
     Awaitable,
@@ -365,7 +366,8 @@ class BaseOpenAIChatProvider(
                 **completion_kwargs,  # type: ignore
             )
 
-        completion = await _create_chat_completion_with_retry(**completion_kwargs)
+        with weave.attributes({'weave_task_id': os.getenv('WEAVE_TASK_ID')}):
+            completion = await _create_chat_completion_with_retry(**completion_kwargs)
 
         end_time = time.time()
         if completion.usage:

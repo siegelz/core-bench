@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import logging
+import os
 import time
 from typing import TYPE_CHECKING, Any, Callable, Optional, ParamSpec, Sequence, TypeVar
 import weave
@@ -458,7 +459,8 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
             )
         
         start_time = time.time()
-        response = await _create_chat_completion_with_retry(**completion_kwargs)
+        with weave.attributes({'weave_task_id': os.getenv('WEAVE_TASK_ID')}):
+            response = await _create_chat_completion_with_retry(**completion_kwargs)
         end_time = time.time()
 
         cost = self._budget.update_usage_and_cost(

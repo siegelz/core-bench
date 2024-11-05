@@ -100,9 +100,10 @@ async def run_auto_gpt(
 ):
     # init weave
     try:
-        weave.init(override_ai_name)
+        weave.init(os.getenv("WEAVE_PROJECT_NAME", "AutoGPT"))
     except Exception as e:
         print("WARRNING: weave init failed, error: ", e)
+    os.environ["WEAVE_TASK_ID"] = override_ai_name
 
     # Set up configuration
     config = ConfigBuilder.build_config_from_env()
