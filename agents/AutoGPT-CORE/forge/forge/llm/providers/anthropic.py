@@ -9,7 +9,7 @@ import weave
 import sentry_sdk
 import tenacity
 import tiktoken
-from anthropic import APIConnectionError, APIStatusError
+from anthropic import APIConnectionError, APIStatusError, RateLimitError
 from pydantic.v1 import SecretStr
 
 from forge.models.config import UserConfigurable
@@ -505,6 +505,9 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
                 tenacity.retry_if_exception_type(APIConnectionError)
                 | tenacity.retry_if_exception(
                     lambda e: isinstance(e, APIStatusError) and e.status_code >= 500
+                )
+                | tenacity.retry_if_exception_type(
+                    lambda e: isinstance(e, RateLimitError) and e.status_code == 429
                 )
             ),
             wait=tenacity.wait_exponential(),
