@@ -510,7 +510,7 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
                     lambda e: isinstance(e, RateLimitError) and e.status_code == 429
                 )
             ),
-            wait=tenacity.wait_random_exponential()
+            wait=tenacity.wait_random_exponential(),
             stop=tenacity.stop_after_attempt(10),
             after=tenacity.after_log(self._logger, logging.DEBUG),
         )(func)
