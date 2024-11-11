@@ -55,7 +55,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 # Run the agent
 . autogpt.sh run \
   --ai-task "$task_prompt" \
-  --ai-name "${cap_subdir}_coreagent_medium_gpt4o" \
+  --ai-name "$cap_subdir" \
   --ai-role "a seasoned digital assistant: capable, intelligent, considerate, and assertive. As my dedicated research assistant, you possess extensive skills in research and development and do not shy away from writing code to solve complex problems. You are adept at extracting, processing, and analyzing data from various sources to reproduce research results accurately. Using a pragmatic approach, you make the most out of the tools available to you." \
   --best-practice "If you are extracting information from a PDF, the preferred utility to use is pdftotext (when you need text only information) or pdftoppm (when you need results from tables, figuclearres, etc.)." \
   --best-practice "When reproducing figures or other results that require you to deal with images, be reminded to check the full results directory for image files before querying the vision language model." \
