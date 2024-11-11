@@ -506,7 +506,7 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
                 | tenacity.retry_if_exception(
                     lambda e: isinstance(e, APIStatusError) and e.status_code >= 500
                 )
-                | tenacity.retry_if_exception_type(
+                | tenacity.retry_if_exception(
                     lambda e: isinstance(e, RateLimitError) and e.status_code == 429
                 )
             ),
