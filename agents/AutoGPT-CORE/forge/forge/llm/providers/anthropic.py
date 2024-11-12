@@ -164,6 +164,9 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
 
     def count_tokens(self, text: str, model_name: AnthropicModelName) -> int:
         # HACK: This is an estimate used to avoid sending messages that are too long, probably not exact
+        if text == "": 
+            return 0
+
         url = "https://api.anthropic.com/v1/messages/count_tokens"
         headers = {
             "x-api-key": self._credentials.get_api_access_kwargs()["api_key"],
@@ -181,7 +184,7 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
         print("ANTHROPIC_TEXT:", text)
         print("COUNT_TOKENS:", response.json())
 
-        return response.json()["input_tokens"]
+        return response.json()["input_tokens"] if 'error' not in response.json() else 200_000 # HACK if request is too long
 
     def count_message_tokens(
         self,
@@ -216,7 +219,7 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
         print("ANTHROPIC_MESSAGES:", anthropic_messages)
         print("COUNT_MESSAGE_TOKENS:", response.json())
 
-        return response.json()["input_tokens"]
+        return response.json()["input_tokens"] if 'error' not in response.json() else 200_000 # HACK if request is too long
 
     async def create_chat_completion(
         self,
