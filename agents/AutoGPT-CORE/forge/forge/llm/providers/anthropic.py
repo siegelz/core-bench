@@ -5,12 +5,15 @@ import logging
 import os
 import time
 from typing import TYPE_CHECKING, Any, Callable, Optional, ParamSpec, Sequence, TypeVar
+
+import requests
 import weave
 import sentry_sdk
 import tenacity
 import tiktoken
 from anthropic import APIConnectionError, APIStatusError, RateLimitError
 from pydantic.v1 import SecretStr
+import anthropic
 
 from forge.models.config import UserConfigurable
 
@@ -160,14 +163,60 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
         return tiktoken.encoding_for_model(model_name)
 
     def count_tokens(self, text: str, model_name: AnthropicModelName) -> int:
-        return 0  # HACK: No official tokenizer is available for Claude 3
+        # HACK: This is an estimate used to avoid sending messages that are too long, probably not exact
+        url = "https://api.anthropic.com/v1/messages/count_tokens"
+        headers = {
+            "x-api-key": self._credentials.get_api_access_kwargs()["api_key"],
+            "content-type": "application/json",
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "token-counting-2024-11-01"
+        }
+        data = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": text}]
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+
+        print("ANTHROPIC_TEXT:", text)
+        print("COUNT_TOKENS:", response.json())
+
+        return response.json()["input_tokens"]
 
     def count_message_tokens(
         self,
         messages: ChatMessage | list[ChatMessage],
         model_name: AnthropicModelName,
     ) -> int:
-        return 0  # HACK: No official tokenizer is available for Claude 3
+        # HACK: This is an estimate used to avoid sending messages that are too long, probably not exact
+        if isinstance(messages, ChatMessage):
+            messages = [messages]
+        
+        anthropic_messages = [
+            {
+                "role": "user", # Hack
+                "content": value
+            } for message in messages for key, value in message.dict().items()
+        ]
+
+        url = "https://api.anthropic.com/v1/messages/count_tokens"
+        headers = {
+            "x-api-key": self._credentials.get_api_access_kwargs()["api_key"],
+            "content-type": "application/json",
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "token-counting-2024-11-01"
+        }
+        data = {
+            "model": model_name,
+            "messages": anthropic_messages
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+
+        print("ANTHROPIC_MESSAGES:", anthropic_messages)
+        print("COUNT_MESSAGE_TOKENS:", response.json())
+
+        return response.json()["input_tokens"]
 
     async def create_chat_completion(
         self,
