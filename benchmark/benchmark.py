@@ -362,7 +362,10 @@ class CodeOceanBenchmark:
                     )
                 break
             except Exception as e:
-                if attempt == 4: raise Exception(f"Failed to create VM for {task.capsule_id}: {e}")
+                if attempt == 4: 
+                    print(f"[Benchmark] Deleting the VM for {task.capsule_id}...")
+                    self.VMM.delete_vm(vm_name = f"{task.capsule_id}-{self.timestamp}")
+                    raise Exception(f"Failed to create VM for {task.capsule_id}: {e}")
                 print(f"[Benchmark] Error thrown while creating VM: {e}")
                 time.sleep(10)
 
