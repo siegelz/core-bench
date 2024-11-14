@@ -50,7 +50,7 @@ spacy = "^3.7.4"
 tenacity = "^8.2.2"
 httpx = "^0.27.2"
 duckduckgo_search = "^6.3.0"
-weave = "^0.50.5"
+weave = "^0.51.18"
 
 # OpenAI and Generic plugins import
 # openapi-python-client = "^0.14.0"

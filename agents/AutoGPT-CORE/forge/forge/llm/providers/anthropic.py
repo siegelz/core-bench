@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import enum
 import logging
+import os
+import time
 from typing import TYPE_CHECKING, Any, Callable, Optional, ParamSpec, Sequence, TypeVar
 
+import requests
+import weave
 import sentry_sdk
 import tenacity
 import tiktoken
-from anthropic import APIConnectionError, APIStatusError
+from anthropic import APIConnectionError, APIStatusError, RateLimitError
 from pydantic.v1 import SecretStr
+import anthropic
 
 from forge.models.config import UserConfigurable
 
@@ -41,6 +46,7 @@ _P = ParamSpec("_P")
 
 
 class AnthropicModelName(str, enum.Enum):
+    CLAUDE35_SONNET_v1 = "claude-3-5-sonnet-20241022"
     CLAUDE3_OPUS_v1 = "claude-3-opus-20240229"
     CLAUDE3_SONNET_v1 = "claude-3-sonnet-20240229"
     CLAUDE3_HAIKU_v1 = "claude-3-haiku-20240307"
@@ -49,6 +55,14 @@ class AnthropicModelName(str, enum.Enum):
 ANTHROPIC_CHAT_MODELS = {
     info.name: info
     for info in [
+        ChatModelInfo(
+            name=AnthropicModelName.CLAUDE35_SONNET_v1,
+            provider_name=ModelProviderName.ANTHROPIC,
+            prompt_token_cost=3 / 1e6,
+            completion_token_cost=15 / 1e6,
+            max_tokens=200000,
+            has_function_call_api=True,
+        ),
         ChatModelInfo(
             name=AnthropicModelName.CLAUDE3_OPUS_v1,
             provider_name=ModelProviderName.ANTHROPIC,
@@ -149,14 +163,63 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
         return tiktoken.encoding_for_model(model_name)
 
     def count_tokens(self, text: str, model_name: AnthropicModelName) -> int:
-        return 0  # HACK: No official tokenizer is available for Claude 3
+        # HACK: This is an estimate used to avoid sending messages that are too long, probably not exact
+        if text == "": 
+            return 0
+
+        url = "https://api.anthropic.com/v1/messages/count_tokens"
+        headers = {
+            "x-api-key": self._credentials.get_api_access_kwargs()["api_key"],
+            "content-type": "application/json",
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "token-counting-2024-11-01"
+        }
+        data = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": text}]
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+
+        print("ANTHROPIC_TEXT:", text)
+        print("COUNT_TOKENS:", response.json())
+
+        return response.json()["input_tokens"] if 'error' not in response.json() else 200_000 # HACK if request is too long
 
     def count_message_tokens(
         self,
         messages: ChatMessage | list[ChatMessage],
         model_name: AnthropicModelName,
     ) -> int:
-        return 0  # HACK: No official tokenizer is available for Claude 3
+        # HACK: This is an estimate used to avoid sending messages that are too long, probably not exact
+        if isinstance(messages, ChatMessage):
+            messages = [messages]
+        
+        anthropic_messages = [
+            {
+                "role": "user", # Hack
+                "content": value
+            } for message in messages for key, value in message.dict().items()
+        ]
+
+        url = "https://api.anthropic.com/v1/messages/count_tokens"
+        headers = {
+            "x-api-key": self._credentials.get_api_access_kwargs()["api_key"],
+            "content-type": "application/json",
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "token-counting-2024-11-01"
+        }
+        data = {
+            "model": model_name,
+            "messages": anthropic_messages
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+
+        print("ANTHROPIC_MESSAGES:", anthropic_messages)
+        print("COUNT_MESSAGE_TOKENS:", response.json())
+
+        return response.json()["input_tokens"] if 'error' not in response.json() else 200_000 # HACK if request is too long
 
     async def create_chat_completion(
         self,
@@ -441,18 +504,35 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
         """
 
         @self._retry_api_request
-        async def _create_chat_completion_with_retry() -> Message:
+        @weave.op()
+        async def _create_chat_completion_with_retry(**completion_kwargs) -> Message:
             return await self._client.beta.tools.messages.create(
-                model=model, **completion_kwargs  # type: ignore
+                **completion_kwargs  # type: ignore
             )
-
-        response = await _create_chat_completion_with_retry()
+        
+        start_time = time.time()
+        with weave.attributes({'weave_task_id': os.getenv('WEAVE_TASK_ID')}):
+            response = await _create_chat_completion_with_retry(**completion_kwargs)
+        end_time = time.time()
 
         cost = self._budget.update_usage_and_cost(
             model_info=ANTHROPIC_CHAT_MODELS[model],
             input_tokens_used=response.usage.input_tokens,
             output_tokens_used=response.usage.output_tokens,
         )
+
+        self._logger.info("Anthropic API call", extra={
+            "model_name": completion_kwargs["model"],
+            "input_messages": completion_kwargs.get("messages"),
+            "output_messages": response.content[0].text,
+            "inference_time": end_time - start_time,
+            "prompt_tokens": response.usage.input_tokens,
+            "completion_tokens": response.usage.output_tokens,
+            "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
+            "temperature": completion_kwargs.get("temperature", 0.0),
+            "type": "api_call",
+        })
+
         return response, cost, response.usage.input_tokens, response.usage.output_tokens
 
     def _parse_assistant_tool_calls(
@@ -478,9 +558,12 @@ class AnthropicProvider(BaseChatModelProvider[AnthropicModelName, AnthropicSetti
                 | tenacity.retry_if_exception(
                     lambda e: isinstance(e, APIStatusError) and e.status_code >= 500
                 )
+                | tenacity.retry_if_exception(
+                    lambda e: isinstance(e, RateLimitError) and e.status_code == 429
+                )
             ),
-            wait=tenacity.wait_exponential(),
-            stop=tenacity.stop_after_attempt(self._configuration.retries_per_request),
+            wait=tenacity.wait_random_exponential(),
+            stop=tenacity.stop_after_attempt(10),
             after=tenacity.after_log(self._logger, logging.DEBUG),
         )(func)
 

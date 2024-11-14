@@ -76,7 +76,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/results /results
   --skip-reprompt \
   --continuous \
   --log-level DEBUG \
-  --vlm "gpt-4o-2024-05-13" --fast_llm "o1-mini-2024-09-12" --smart_llm "o1-mini-2024-09-12" --programmatic_key_check \
+  --vlm "gpt-4o-2024-05-13" --fast_llm "claude-3-5-sonnet-20241022" --smart_llm "claude-3-5-sonnet-20241022" --programmatic_key_check \
   --openai_cost_budget 4
 
 cd ..
