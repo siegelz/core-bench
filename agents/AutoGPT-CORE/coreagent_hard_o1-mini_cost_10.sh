@@ -6,9 +6,14 @@ task_prompt=$(cat $SCRIPT_DIR/environment/task.txt)
 
 echo 'Installing dependencies...'
 
-# Install dependencies
+# Install Python 3.10
 sudo apt update
-sudo apt install -y python3-pip
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt update
+sudo apt install python3.10 python3.10-venv python3.10-dev -y
+
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
 
 # Install Docker
 sudo apt install docker.io -y
@@ -37,8 +42,7 @@ fi
 sudo apt install -y poppler-utils
 
 # setup AutoGPT
-sudo apt install pipx -y
-pipx install poetry
+curl -sSL https://install.python-poetry.org | python3.10 -
 export PATH="/root/.local/bin:$PATH"
 mv environment autogpt/environment
 cd autogpt
@@ -55,7 +59,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 # Run the agent
 . autogpt.sh run \
   --ai-task "$task_prompt" \
-  --ai-name $cap_subdir \
+  --ai-name "$cap_subdir" \
   --ai-role "a seasoned digital assistant: capable, intelligent, considerate, and assertive. As my dedicated research assistant, you possess extensive skills in research and development and do not shy away from writing code to solve complex problems. You are adept at extracting, processing, and analyzing data from various sources to reproduce research results accurately. Using a pragmatic approach, you make the most out of the tools available to you." \
   --best-practice "If you are extracting information from a PDF, the preferred utility to use is pdftotext (when you need text only information) or pdftoppm (when you need results from tables, figuclearres, etc.)." \
   --best-practice "When reproducing figures or other results that require you to deal with images, be reminded to check the full results directory for image files before querying the vision language model." \

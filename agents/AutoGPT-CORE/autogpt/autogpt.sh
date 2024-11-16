@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 function find_python_command() {
-    if command -v python3 &> /dev/null
+    if command -v python3.10 &> /dev/null
+    then
+        echo "python3.10"
+    elif command -v python3 &> /dev/null
     then
         echo "python3"
     elif command -v python &> /dev/null

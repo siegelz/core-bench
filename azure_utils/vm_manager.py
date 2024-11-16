@@ -75,8 +75,8 @@ class VirtualMachineManager:
         if image_reference is None:
             image_reference = {
                 "publisher": "Canonical",
-                "offer": "0001-com-ubuntu-server-jammy",
-                "sku": "22_04-lts-gen2",
+                "offer": "0001-com-ubuntu-server-focal",
+                "sku": "20_04-lts-gen2",
                 "version": "latest"
             }
 
@@ -172,8 +172,8 @@ class VirtualMachineManager:
         if image_reference is None:
             image_reference = {
                 "publisher": "Canonical",
-                "offer": "0001-com-ubuntu-server-jammy",
-                "sku": "22_04-lts-gen2",
+                "offer": "0001-com-ubuntu-server-focal",
+                "sku": "20_04-lts-gen2",
                 "version": "latest"
             }
 
@@ -401,7 +401,7 @@ class VirtualMachineManager:
 
         return log_contents
 
-    def run_agent_on_vm(self, agent_script, vm_name, username, ssh_private_key_path, timeout=8100):
+    def run_agent_on_vm(self, agent_script, vm_name, username, ssh_private_key_path, weave_project_name="CORE-Bench", timeout=8100):
         # Start the VM
         self.compute_client.virtual_machines.begin_start(
             self.resource_group_name, vm_name
@@ -426,7 +426,7 @@ class VirtualMachineManager:
         _, stdout, stderr = ssh_client.exec_command("echo '127.0.0.1 codeocean.com' | sudo tee -a /etc/hosts", timeout=1)
 
         # Run the agent script on the VM
-        _, stdout, stderr = ssh_client.exec_command(f"sudo nohup bash -c '(timeout {timeout} bash /home/{username}/{agent_script}) ; touch /home/{username}/task_completed' > /home/{username}/output.log 2>&1 &", timeout=1)
+        _, stdout, stderr = ssh_client.exec_command(f"sudo nohup bash -c '(export WEAVE_PROJECT_NAME={weave_project_name};timeout {timeout} bash /home/{username}/{agent_script}) ; touch /home/{username}/task_completed' > /home/{username}/output.log 2>&1 &", timeout=1)
 
         # Close the SSH connection
         ssh_client.close()

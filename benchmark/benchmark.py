@@ -271,7 +271,7 @@ class CodeOceanBenchmark:
             container = client.containers.run(
                 image = f"{task.capsule_id}-{self.timestamp}",
                 name = f"{task.capsule_id}-{self.timestamp}",
-                command = f"bash -c '(timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed'",
+                command = f"bash -c '(export WEAVE_PROJECT_NAME={self.timestamp}_{self.benchmark_level}; timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed'",
                 privileged = True,
                 detach = True,
                 stdout = True,
@@ -306,7 +306,6 @@ class CodeOceanBenchmark:
             container.stop()
             container.remove()
             client.images.remove(f"{task.capsule_id}-{self.timestamp}")
-
 
     def __eval_agent_local(self, task):
         task_path = os.path.join("benchmark", "temp_envs", self.experiment_name, f"{task.capsule_id}-{self.timestamp}")
@@ -363,7 +362,10 @@ class CodeOceanBenchmark:
                     )
                 break
             except Exception as e:
-                if attempt == 4: raise Exception(f"Failed to create VM for {task.capsule_id}: {e}")
+                if attempt == 4: 
+                    print(f"[Benchmark] Deleting the VM for {task.capsule_id}...")
+                    self.VMM.delete_vm(vm_name = f"{task.capsule_id}-{self.timestamp}")
+                    raise Exception(f"Failed to create VM for {task.capsule_id}: {e}")
                 print(f"[Benchmark] Error thrown while creating VM: {e}")
                 time.sleep(10)
 
@@ -393,6 +395,7 @@ class CodeOceanBenchmark:
                     vm_name = f"{task.capsule_id}-{self.timestamp}",
                     username = "crab",
                     ssh_private_key_path = SSH_PRIVATE_KEY_PATH,
+                    weave_project_name = f"{self.timestamp}_{self.benchmark_level}"
                 )
                 break
             except Exception as e:

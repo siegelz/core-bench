@@ -71,6 +71,7 @@ COST_DICT = {
                 "gpt-4o-mini": {"prompt_tokens": 0.15/1e6, "completion_tokens": 1/1e6},
                 "o1-preview-2024-09-12": {"prompt_tokens": 15/1e6, "completion_tokens": 60/1e6},
                 "o1-mini-2024-09-12": {"prompt_tokens": 3/1e6, "completion_tokens": 12/1e6},
+                "claude-3-5-sonnet-20241022": {"prompt_tokens": 3/1e6, "completion_tokens": 15/1e6},
             }
 
 
@@ -99,9 +100,10 @@ async def run_auto_gpt(
 ):
     # init weave
     try:
-        weave.init(override_ai_name)
+        weave.init(os.getenv("WEAVE_PROJECT_NAME", "AutoGPT"))
     except Exception as e:
         print("WARRNING: weave init failed, error: ", e)
+    os.environ["WEAVE_TASK_ID"] = override_ai_name
 
     # Set up configuration
     config = ConfigBuilder.build_config_from_env()
