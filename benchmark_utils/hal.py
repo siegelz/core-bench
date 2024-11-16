@@ -1,12 +1,12 @@
 import json
 import argparse
 import datetime
+import os
 
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Process result data and compute accuracy.')
     parser.add_argument('--result_path', required=True, help='Path to the input result file')
-    parser.add_argument('--output_path', required=True, help='Path to the output file')
     parser.add_argument('--agent_name', required=True, help='Agent name')
     parser.add_argument('--benchmark_name', required=True, help='Benchmark name')
     parser.add_argument('--run_id', required=True, help='Run ID')
@@ -56,7 +56,8 @@ def main():
     }
 
     # Write the output JSON
-    with open(args.output_path, 'w') as f:
+    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{args.run_id}.json")
+    with open(filepath, 'w') as f:
         json.dump(output_data, f, indent=2)
 
 if __name__ == '__main__':
