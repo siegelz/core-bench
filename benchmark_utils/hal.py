@@ -9,10 +9,11 @@ def main():
     parser.add_argument('--result_path', required=True, help='Path to the input result file')
     parser.add_argument('--agent_name', required=True, help='Agent name')
     parser.add_argument('--benchmark_name', required=True, help='Benchmark name')
-    parser.add_argument('--run_id', required=True, help='Run ID')
     parser.add_argument('--date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='Date in YYYY-MM-DD format')
 
     args = parser.parse_args()
+
+    run_id = f"{args.benchmark_name}_{args.agent_name.lower().replace(' ', '_').replace('.', '_').replace('(', '').replace(')', '')}_{args.date.replace('-', '')}"
 
     # Read the input JSON file
     with open(args.result_path, 'r') as f:
@@ -67,7 +68,7 @@ def main():
             "agent_name": args.agent_name,
             "benchmark_name": args.benchmark_name,
             "date": args.date,
-            "run_id": args.run_id
+            "run_id": run_id
         },
         "results": {
             "accuracy": accuracy,
@@ -78,7 +79,7 @@ def main():
     }
 
     # Write the output JSON
-    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{args.run_id}.json")
+    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{run_id}.json")
     with open(filepath, 'w') as f:
         json.dump(output_data, f, indent=2)
 
