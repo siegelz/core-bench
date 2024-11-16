@@ -6,9 +6,14 @@ task_prompt=$(cat $SCRIPT_DIR/environment/task.txt)
 
 echo 'Installing dependencies...'
 
-# Install dependencies
+# Install Python 3.10
 sudo apt update
-sudo apt install -y python3-pip
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt update
+sudo apt install python3.10 python3.10-venv python3.10-dev -y
+
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
 
 # Install Docker
 sudo apt install docker.io -y
@@ -37,8 +42,7 @@ fi
 sudo apt install -y poppler-utils
 
 # setup AutoGPT
-sudo apt install pipx -y
-pipx install poetry
+curl -sSL https://install.python-poetry.org | python3.10 -
 export PATH="/root/.local/bin:$PATH"
 mv environment autogpt/environment
 cd autogpt
