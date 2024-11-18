@@ -84,7 +84,7 @@ def main():
     }
 
     # Write the output JSON
-    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{run_id}.json")
+    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal_json", f"{run_id}.json")
     with open(filepath, 'w') as f:
         json.dump(output_data, f, indent=2)
 

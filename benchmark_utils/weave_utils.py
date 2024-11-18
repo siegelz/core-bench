@@ -4,6 +4,7 @@ from tqdm import tqdm
 import requests
 import os
 import json
+from datetime import datetime
 
 MODEL_PRICES_DICT = {
                 "text-embedding-3-small": {"prompt_tokens": 0.02/1e6, "completion_tokens": 0},
@@ -191,14 +192,14 @@ def get_weave_calls(client):
                 created = call['output']['created']
             elif call['output']['content']: # tooluse
                 choices = call['output']['content']
-                created = None
+                created = int(datetime.strptime(call['started_at'], "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
 
             output = {
                 'weave_task_id': call['attributes']['weave_task_id'] if 'weave_task_id' in call['attributes'] else None,
                 'trace_id': call['trace_id'],
                 'project_id': call['project_id'],
                 'created_timestamp': created,
-                'inputs': call['inputs'],
+                'inputs': call['inputs']['completion_kwargs'] if 'completion_kwargs' in call['inputs'] else call['inputs'],
                 'id': call['id'],
                 'outputs': choices,
                 'exception':  call['exception'],
