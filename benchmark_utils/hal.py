@@ -3,6 +3,9 @@ import argparse
 import datetime
 import os
 
+from weave_utils import get_weave_calls
+import weave
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Process result data and compute accuracy.')
@@ -14,6 +17,7 @@ def main():
     args = parser.parse_args()
 
     run_id = f"{args.benchmark_name}_{args.agent_name.lower().replace(' ', '_').replace('.', '_').replace('(', '').replace(')', '')}_{args.date.replace('-', '')}"
+    client = weave.init(os.path.splitext(os.path.basename(args.result_path))[0])
 
     # Read the input JSON file
     with open(args.result_path, 'r') as f:
@@ -75,7 +79,8 @@ def main():
             "total_cost": total_cost if total_cost > 0 else None,
             "successful_tasks": successful_tasks,
             "failed_tasks": failed_tasks
-        }
+        },
+        "raw_logging_results": get_weave_calls(client)
     }
 
     # Write the output JSON
