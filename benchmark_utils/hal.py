@@ -2,30 +2,46 @@ import json
 import argparse
 import datetime
 import os
+import glob
+from collections import defaultdict
+import re
 
 from weave_utils import get_weave_calls
 import weave
 
-def main():
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Process result data and compute accuracy.')
-    parser.add_argument('--result_path', required=True, help='Path to the input result file')
-    parser.add_argument('--agent_name', required=True, help='Agent name')
-    parser.add_argument('--benchmark_name', required=True, help='Benchmark name')
-    parser.add_argument('--date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='Date in YYYY-MM-DD format')
-    parser.add_argument('--dataset_path', default='benchmark/dataset/core_test.json', help='Path to dataset file')
+def get_benchmark_name(filename):
+    """Determine benchmark name based on file content"""
+    # If filename contains 'hard', it's corebench_hard, otherwise corebench_easy
+    return "corebench_hard" if "hard" in filename.lower() else "corebench_easy"
 
-    args = parser.parse_args()
+def standardize_name(name):
+    """Convert agent name to standardized format for run_id"""
+    # Convert to lowercase
+    name = name.lower()
+    # Replace spaces and special chars (except hyphens) with underscores
+    name = re.sub(r'[^a-z0-9\-]+', '_', name)
+    # Remove leading/trailing underscores
+    name = name.strip('_')
+    return name
 
-    run_id = f"{args.benchmark_name}_{args.agent_name.lower().replace(' ', '_').replace('.', '_').replace('(', '').replace(')', '')}_{args.date.replace('-', '')}"
-    client = weave.init(os.path.splitext(os.path.basename(args.result_path))[0])
+def process_result_file(result_path, agent_name, date, dataset_path):
+    # Get standardized benchmark name
+    filename = os.path.basename(result_path)
+    benchmark_name = get_benchmark_name(filename)
+
+    # Standardize the run_id format
+    standardized_agent_name = standardize_name(agent_name)
+    date_compact = date.replace('-', '')
+    run_id = f"{benchmark_name}_{standardized_agent_name}_{date_compact}"
+
+    client = weave.init(os.path.splitext(os.path.basename(result_path))[0])
 
     # Read the input JSON file
-    with open(args.result_path, 'r') as f:
+    with open(result_path, 'r') as f:
         data = json.load(f)
 
     # Read dataset file
-    with open(args.dataset_path, 'r') as f:
+    with open(dataset_path, 'r') as f:
         dataset = json.load(f)
 
     # Create lookup dict for ground truth
@@ -40,10 +56,10 @@ def main():
     attempted_tasks = 0
 
     # Determine the logs directory based on the result_path
-    result_dir = os.path.dirname(os.path.abspath(args.result_path))
+    result_dir = os.path.dirname(os.path.abspath(result_path))
     logs_dir = result_dir.replace(os.sep + 'results' + os.sep, os.sep + 'logs' + os.sep)
     # Extract the subdirectory from the result_path filename
-    result_filename = os.path.splitext(os.path.basename(args.result_path))[0]
+    result_filename = os.path.splitext(os.path.basename(result_path))[0]
     logs_dir = os.path.join(logs_dir, result_filename)
 
     for capsule in capsule_results:
@@ -86,9 +102,9 @@ def main():
     # Build the output JSON
     output_data = {
         "config": {
-            "agent_name": args.agent_name,
-            "benchmark_name": args.benchmark_name,
-            "date": args.date,
+            "agent_name": agent_name,
+            "benchmark_name": benchmark_name,
+            "date": date,
             "run_id": run_id
         },
         "results": {
@@ -101,10 +117,54 @@ def main():
         "raw_logging_results": get_weave_calls(client)
     }
 
-    # Write the output JSON
+    # Write the output JSON with standardized filename
     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal_json", f"{run_id}.json")
     with open(filepath, 'w') as f:
         json.dump(output_data, f, indent=2)
+
+def collect_agent_names(files):
+    """Collect agent names for unique parent directories"""
+    # Group files by parent directory
+    dir_files = defaultdict(list)
+    for file_path in files:
+        parent_dir = os.path.dirname(file_path)
+        dir_files[parent_dir].append(file_path)
+
+    # Collect agent names for each unique directory
+    agent_names = {}
+    for parent_dir, dir_file_list in dir_files.items():
+        dir_name = os.path.basename(parent_dir)
+        agent_name = input(f"What is the agent name for {dir_name}? ")
+        if agent_name.strip():  # Only store non-empty names
+            # Apply the name to all files in this directory
+            for file_path in dir_file_list:
+                agent_names[file_path] = agent_name
+
+    return agent_names
+
+def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Process result data and compute accuracy.')
+    parser.add_argument('--result_path', help='Path to specific result file. If not provided, processes all files in benchmark/results')
+    parser.add_argument('--date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='Date in YYYY-MM-DD format')
+    parser.add_argument('--dataset_path', default='benchmark/dataset/core_test.json', help='Path to dataset file')
+
+    args = parser.parse_args()
+
+    if args.result_path:
+        # Single file mode
+        files = [args.result_path]
+    else:
+        # Multiple files mode
+        results_dir = 'benchmark/results'
+        files = glob.glob(os.path.join(results_dir, '**/*.json'), recursive=True)
+
+    # First collect all agent names by directory
+    agent_names = collect_agent_names(files)
+
+    # Then process files that have agent names
+    for result_file, agent_name in agent_names.items():
+        process_result_file(result_file, agent_name, args.date, args.dataset_path)
 
 if __name__ == '__main__':
     main()
