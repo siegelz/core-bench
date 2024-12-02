@@ -13,6 +13,7 @@ def main():
     parser.add_argument('--agent_name', required=True, help='Agent name')
     parser.add_argument('--benchmark_name', required=True, help='Benchmark name')
     parser.add_argument('--date', default=datetime.datetime.now().strftime('%Y-%m-%d'), help='Date in YYYY-MM-DD format')
+    parser.add_argument('--dataset_path', default='benchmark/dataset/core_test.json', help='Path to dataset file')
 
     args = parser.parse_args()
 
@@ -23,12 +24,20 @@ def main():
     with open(args.result_path, 'r') as f:
         data = json.load(f)
 
+    # Read dataset file
+    with open(args.dataset_path, 'r') as f:
+        dataset = json.load(f)
+
+    # Create lookup dict for ground truth
+    ground_truth_dict = {item['capsule_id']: item['results'][0].keys() for item in dataset}
+
     # Process the data
     capsule_results = data.get('capsule_results', [])
     total_tasks = len(capsule_results)
     successful_tasks = []
     failed_tasks = []
     total_cost = 0.0
+    attempted_tasks = 0
 
     # Determine the logs directory based on the result_path
     result_dir = os.path.dirname(os.path.abspath(args.result_path))
@@ -43,6 +52,13 @@ def main():
         total_written_questions = capsule.get('total_written_questions', 0)
         correct_vision_answers = capsule.get('correct_vision_answers', 0)
         total_vision_questions = capsule.get('total_vision_questions', 0)
+
+        # Check if all questions were attempted
+        if capsule_id in ground_truth_dict:
+            result_report = capsule.get('result_report', {})
+            expected_keys = ground_truth_dict[capsule_id]
+            if all(key in result_report for key in expected_keys):
+                attempted_tasks += 1
 
         # Determine success or failure
         if (correct_written_answers == total_written_questions) and (correct_vision_answers == total_vision_questions):
@@ -65,6 +81,7 @@ def main():
             pass  # File does not exist; cost remains unchanged
 
     accuracy = round(len(successful_tasks) / total_tasks, 4) if total_tasks > 0 else 0
+    attempted_rate = round(attempted_tasks / total_tasks, 4) if total_tasks > 0 else 0
 
     # Build the output JSON
     output_data = {
@@ -75,7 +92,8 @@ def main():
             "run_id": run_id
         },
         "results": {
-            "accuracy": accuracy,
+            "accuracy": accuracy, # Success rate of correctly answering all task questions
+            "attempted_rate": attempted_rate, # Rate of tasks where all questions were attempted
             "total_cost": total_cost if total_cost > 0 else None,
             "successful_tasks": successful_tasks,
             "failed_tasks": failed_tasks
