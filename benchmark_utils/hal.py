@@ -9,10 +9,26 @@ import re
 from weave_utils import get_weave_calls
 import weave
 
+# Dictionary mapping directory names to agent names
+AGENT_NAME_MAPPING = {
+    "test_autogpt_gpt4o_c-4": "AutoGPT (gpt-4o-2024-05-13)",
+    "test_autogpt_gpt4o-mini_c-4": "AutoGPT (gpt-4o-mini-2024-07-18)",
+    "test_coreagent_claude_35_sonnet_c-4": "CORE-Agent (claude-3.5-sonnet-2024-10-22)",
+    "test_coreagent_gpt4o_c-4": "CORE-Agent (gpt-4o-2024-05-13)",
+    "test_coreagent_gpt4o-mini_c-4": "CORE-Agent (gpt-4o-mini-2024-07-18)",
+    "test_coreagent_o1-mini_c-10": "CORE-Agent (o1-mini-2024-09-12)",
+}
+
 def get_benchmark_name(filename):
     """Determine benchmark name based on file content"""
-    # If filename contains 'hard', it's corebench_hard, otherwise corebench_easy
-    return "corebench_hard" if "hard" in filename.lower() else "corebench_easy"
+    filename_lower = filename.lower()
+    if "hard" in filename_lower:
+        benchmark_name = "corebench_hard"
+    elif "medium" in filename_lower:
+        benchmark_name = "corebench_medium"
+    else:
+        benchmark_name = "corebench_easy"
+    return benchmark_name
 
 def standardize_name(name):
     """Convert agent name to standardized format for run_id"""
@@ -23,6 +39,12 @@ def standardize_name(name):
     # Remove leading/trailing underscores
     name = name.strip('_')
     return name
+
+def get_timestamp_from_filename(filename):
+    """Extract timestamp from filename, assuming format contains YYYYMMDD-HHMMSS"""
+    match = re.search(r'(\d{8}-\d{6})', filename)
+    timestamp = match.group(1) if match else "99999999-999999"  # Default to high value if no timestamp found
+    return timestamp
 
 def process_result_file(result_path, agent_name, date, dataset_path):
     # Get standardized benchmark name
@@ -134,7 +156,12 @@ def collect_agent_names(files):
     agent_names = {}
     for parent_dir, dir_file_list in dir_files.items():
         dir_name = os.path.basename(parent_dir)
-        agent_name = input(f"What is the agent name for {dir_name}? ")
+        # Check if directory name exists in the mapping
+        if dir_name in AGENT_NAME_MAPPING:
+            agent_name = AGENT_NAME_MAPPING[dir_name]
+        else:
+            agent_name = input(f"What is the agent name for {dir_name}? ")
+        
         if agent_name.strip():  # Only store non-empty names
             # Apply the name to all files in this directory
             for file_path in dir_file_list:
@@ -162,9 +189,19 @@ def main():
     # First collect all agent names by directory
     agent_names = collect_agent_names(files)
 
-    # Then process files that have agent names
+    # Group files by agent and benchmark level
+    agent_benchmark_groups = defaultdict(list)
     for result_file, agent_name in agent_names.items():
-        process_result_file(result_file, agent_name, args.date, args.dataset_path)
+        benchmark_name = get_benchmark_name(result_file)
+        group_key = (agent_name, benchmark_name)
+        agent_benchmark_groups[group_key].append(result_file)
+
+    # Process earliest file from each group
+    for (agent_name, _), file_group in agent_benchmark_groups.items():
+        # Sort files by timestamp and take earliest
+        file_group.sort(key=lambda f: get_timestamp_from_filename(f))
+        earliest_file = file_group[0]
+        process_result_file(earliest_file, agent_name, args.date, args.dataset_path)
 
 if __name__ == '__main__':
     main()
