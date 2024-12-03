@@ -121,6 +121,9 @@ def process_result_file(result_path, agent_name, date, dataset_path):
     accuracy = round(len(successful_tasks) / total_tasks, 4) if total_tasks > 0 else 0
     attempted_rate = round(attempted_tasks / total_tasks, 4) if total_tasks > 0 else 0
 
+    # Get raw logging results
+    raw_logging_results = get_weave_calls(client)
+
     # Build the output JSON
     output_data = {
         "config": {
@@ -136,8 +139,29 @@ def process_result_file(result_path, agent_name, date, dataset_path):
             "successful_tasks": successful_tasks,
             "failed_tasks": failed_tasks
         },
-        "raw_logging_results": get_weave_calls(client)
+        "raw_logging_results": raw_logging_results
     }
+
+    # Add total_usage only if raw_logging_results exists and has data
+    if raw_logging_results:
+        total_usage = {}
+        for result in raw_logging_results:
+            if "summary" in result and "usage" in result["summary"]:
+                for model, model_usage in result["summary"]["usage"].items():
+                    if model not in total_usage:
+                        total_usage[model] = {
+                            "prompt_tokens": 0,
+                            "completion_tokens": 0
+                        }
+                    if "claude" in model:
+                        total_usage[model]["prompt_tokens"] += model_usage.get("input_tokens", 0)
+                        total_usage[model]["completion_tokens"] += model_usage.get("output_tokens", 0)
+                    elif "gpt" in model:
+                        total_usage[model]["prompt_tokens"] += model_usage.get("prompt_tokens", 0)
+                        total_usage[model]["completion_tokens"] += model_usage.get("completion_tokens", 0)
+        
+        if total_usage:
+            output_data["total_usage"] = total_usage
 
     # Write the output JSON with standardized filename
     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal_json", f"{run_id}.json")
