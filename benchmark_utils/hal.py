@@ -76,6 +76,7 @@ def process_result_file(result_path, agent_name, date, dataset_path):
     failed_tasks = []
     total_cost = 0.0
     attempted_tasks = 0
+    raw_eval_results = {}
 
     # Determine the logs directory based on the result_path
     result_dir = os.path.dirname(os.path.abspath(result_path))
@@ -91,9 +92,12 @@ def process_result_file(result_path, agent_name, date, dataset_path):
         correct_vision_answers = capsule.get('correct_vision_answers', 0)
         total_vision_questions = capsule.get('total_vision_questions', 0)
 
+        # Store result_report in raw_eval_results
+        result_report = capsule.get('result_report', {})
+        raw_eval_results[capsule_id] = result_report
+
         # Check if all questions were attempted
         if capsule_id in ground_truth_dict:
-            result_report = capsule.get('result_report', {})
             expected_keys = ground_truth_dict[capsule_id]
             if all(key in result_report for key in expected_keys):
                 attempted_tasks += 1
@@ -139,7 +143,8 @@ def process_result_file(result_path, agent_name, date, dataset_path):
             "successful_tasks": successful_tasks,
             "failed_tasks": failed_tasks
         },
-        "raw_logging_results": raw_logging_results
+        "raw_logging_results": raw_logging_results,
+        "raw_eval_results": raw_eval_results
     }
 
     # Add total_usage only if raw_logging_results exists and has data
