@@ -1,7 +1,7 @@
 <p align="center">
     <a href="https://arxiv.org/abs/2409.11363">
     <img alt="Paper" src="https://img.shields.io/badge/arXiv-arXiv:2409.11363-b31b1b.svg">
-    <a href = "https://agent-evals-core-leaderboard.hf.space">
+    <a href = "https://agent-evals-leaderboard.hf.space">
     <img alt="Leaderboard" src="https://img.shields.io/badge/Leaderboard-Link-blue.svg">
     <a href = "https://github.com/siegelz/core-bench">
     <img alt="GitHub" src="https://img.shields.io/badge/GitHub-Repository-181717.svg">
@@ -24,7 +24,15 @@ This harness allows you to easily evaluate your own agents, or the `AutoGPT` and
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
 ## Leaderboard
-You can view the `CORE-Bench` leaderboard [here](https://agent-evals-core-leaderboard.hf.space). To submit your agent to the leaderboard, you must run it on this harness and follow the [instructions here](https://agent-evals-core-leaderboard.hf.space).
+You can view the `CORE-Bench` leaderboard [here](https://agent-evals-leaderboard.hf.space). 
+
+To submit your agent to the leaderboard, first run the agents you wish to submit on the harness.
+
+Then, run the script `benchmark_utils/hal.py` which converts the harness results to JSON files in `benchmark_utils/hal_json` that can be submitted to the HAL leaderboard. 
+
+By default, this script will convert all agent runs in the `results` directory to the HAL format. You may specify a specific JSON file to convert from the results directory using the `result_path` flag.
+
+Optionally, you can also edit the `AGENT_NAME_MAPPING` dictionary in `hal.py` to give each of your agents a name on the leaderboard. If you do not specify an agent name, the script will prompt you to enter one in the command line.
 
 # Installation and Setup
 The harness has been tested with Python 3.9. Clone the repository and install the required packages:
@@ -122,4 +130,4 @@ Once the agent has completed the task, it should write the answer to a file name
 The harness will automatically terminate the task once the `--agent_script` (e.g. `coreagent_hard_gpt4o.sh`) has completed. Therefore, the agent should write the `report.json` file once it has finished the task.
 
 ## Debugging and Logging
-If you wish to log any additional information (e.g. agent output, debugging information) for the harness to download after the agent has completed the task, write this information to a file named `agent_trace.log` in the **base directory with the other agent files** (not the `environment` directory). **If you plan on submitting your agent to the leaderboard, we require that you include agent traces for all tasks, so please implement this feature.**
+If you wish to log any additional information (e.g. agent output, debugging information) for the harness to download after the agent has completed the task, write this information to a file named `agent_trace.log` in the **base directory with the other agent files** (not the `environment` directory).
