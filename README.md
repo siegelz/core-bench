@@ -23,6 +23,9 @@ This harness allows you to easily evaluate your own agents, or the `AutoGPT` and
 
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
+## Leaderboard
+The `CORE-Bench` leaderboard is hosted through the [Holistic Agent Leaderboard](https://agent-evals-leaderboard.hf.space). For instructions on submitting agents to the leaderboard, please see the [Submitting Agents to the HAL Leaderboard](#submitting-agents-to-the-hal-leaderboard) section.
+
 # Installation and Setup
 The harness has been tested with Python 3.9. Clone the repository and install the required packages:
 ```bash
