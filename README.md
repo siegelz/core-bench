@@ -109,7 +109,7 @@ environment/
 
 Therefore, your agent must read the `task.txt` file to get the task prompt and questions and navigate through the `capsule-XXXXXXX` directory to carry out the task.
 
-## Submitting Answers
+## `report.json`
 Once the agent has completed the task, it should write the answer to a file named `report.json` in the `environment` directory. The keys of the JSON object should be the task questions, and the values should be the answers. For example:
 ```json
 {
