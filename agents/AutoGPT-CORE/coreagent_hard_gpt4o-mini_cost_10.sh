@@ -61,7 +61,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/results /results
   --ai-task "$task_prompt" \
   --ai-name "$cap_subdir" \
   --ai-role "a seasoned digital assistant: capable, intelligent, considerate, and assertive. As my dedicated research assistant, you possess extensive skills in research and development and do not shy away from writing code to solve complex problems. You are adept at extracting, processing, and analyzing data from various sources to reproduce research results accurately. Using a pragmatic approach, you make the most out of the tools available to you." \
-  --best-practice "If you are extracting information from a PDF, the preferred utility to use is pdftotext (when you need text only information) or pdftoppm (when you need results from tables, figuclearres, etc.)." \
+  --best-practice "If you are extracting information from a PDF, the preferred utility to use is pdftotext (when you need text only information) or pdftoppm (when you need results from tables, figures, etc.)." \
   --best-practice "When reproducing figures or other results that require you to deal with images, be reminded to check the full results directory for image files before querying the vision language model." \
   --best-practice "If you are unsure of what to do, make your best guess." \
   --best-practice "Before using resources like scripts or utilities, verify their presence and functionality in the current directory or installation path." \
