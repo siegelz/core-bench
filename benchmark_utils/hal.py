@@ -19,6 +19,16 @@ AGENT_NAME_MAPPING = {
     "test_coreagent_o1-mini_c-10": "CORE-Agent (o1-mini-2024-09-12)",
 }
 
+PROMPT_TOKEN_COST = {
+    "claude-3-5-sonnet-20241022": 3 / 1_000_000,
+    "gpt-4o-2024-05-13": 5 / 1_000_000,
+}
+
+COMPLETION_TOKEN_COST = {
+    "claude-3-5-sonnet-20241022": 15 / 1_000_000,
+    "gpt-4o-2024-05-13": 15 / 1_000_000,
+}
+
 def get_benchmark_name(filename):
     """Determine benchmark name based on file content"""
     filename_lower = filename.lower()
@@ -45,6 +55,31 @@ def get_timestamp_from_filename(filename):
     match = re.search(r'(\d{8}-\d{6})', filename)
     timestamp = match.group(1) if match else "99999999-999999"  # Default to high value if no timestamp found
     return timestamp
+
+def compute_cost_from_tokens(total_usage):
+    """Compute cost using token counts and predefined costs per token"""
+    total_cost = 0.0
+    for model, usage in total_usage.items():
+        if model not in PROMPT_TOKEN_COST or model not in COMPLETION_TOKEN_COST:
+            raise ValueError(f"Model {model} not found in token cost dictionaries")
+        
+        prompt_cost = usage["prompt_tokens"] * PROMPT_TOKEN_COST[model]
+        completion_cost = usage["completion_tokens"] * COMPLETION_TOKEN_COST[model]
+        total_cost += prompt_cost + completion_cost
+    return total_cost
+
+def compute_cost_from_logs(logs_dir, capsule_id):
+    """Compute cost from log files (deprecated method)"""
+    cost = 0.0
+    log_file_path = os.path.join(logs_dir, f"{capsule_id}.log")
+    if os.path.exists(log_file_path):
+        try:
+            with open(log_file_path, 'r') as log_file:
+                log_data = json.load(log_file)
+                cost = log_data.get('cost', 0.0)
+        except json.JSONDecodeError:
+            pass
+    return cost
 
 def process_result_file(result_path, agent_name, date, dataset_path):
     # Get standardized benchmark name
@@ -85,6 +120,46 @@ def process_result_file(result_path, agent_name, date, dataset_path):
     result_filename = os.path.splitext(os.path.basename(result_path))[0]
     logs_dir = os.path.join(logs_dir, result_filename)
 
+    # Get raw logging results first
+    raw_logging_results = get_weave_calls(client)
+
+    # Calculate total usage if raw_logging_results exists and has data
+    total_usage = {}
+    if raw_logging_results and len(raw_logging_results) > 0:
+        for result in raw_logging_results:
+            if "summary" in result and "usage" in result["summary"]:
+                for model, model_usage in result["summary"]["usage"].items():
+                    if model not in total_usage:
+                        total_usage[model] = {
+                            "prompt_tokens": 0,
+                            "completion_tokens": 0
+                        }
+                    if "claude" in model:
+                        total_usage[model]["prompt_tokens"] += model_usage.get("input_tokens", 0)
+                        total_usage[model]["completion_tokens"] += model_usage.get("output_tokens", 0)
+                    elif "gpt" in model:
+                        total_usage[model]["prompt_tokens"] += model_usage.get("prompt_tokens", 0)
+                        total_usage[model]["completion_tokens"] += model_usage.get("completion_tokens", 0)
+
+        # Try to compute cost from token usage if we have data
+        try:
+            if total_usage:
+                total_cost = compute_cost_from_tokens(total_usage)
+        except ValueError as e:
+            print(f"Warning: {str(e)}")
+            # Fallback to log-based cost computation
+            for capsule in capsule_results:
+                total_cost += compute_cost_from_logs(logs_dir, capsule['capsule_id'])
+        except Exception as e:
+            print(f"Error computing cost from tokens: {str(e)}")
+            # Fallback to log-based cost computation
+            for capsule in capsule_results:
+                total_cost += compute_cost_from_logs(logs_dir, capsule['capsule_id'])
+    else:
+        # No raw_logging_results or empty, use log-based calculation
+        for capsule in capsule_results:
+            total_cost += compute_cost_from_logs(logs_dir, capsule['capsule_id'])
+
     for capsule in capsule_results:
         capsule_id = capsule.get('capsule_id')
         correct_written_answers = capsule.get('correct_written_answers', 0)
@@ -108,25 +183,8 @@ def process_result_file(result_path, agent_name, date, dataset_path):
         else:
             failed_tasks.append(capsule_id)
 
-        # Try to read the cost from the .log file
-        log_file_path = os.path.join(logs_dir, f"{capsule_id}.log")
-        if os.path.exists(log_file_path):
-            try:
-                with open(log_file_path, 'r') as log_file:
-                    log_data = json.load(log_file)
-                    cost = log_data.get('cost', None)
-                    if cost is not None:
-                        total_cost += cost
-            except json.JSONDecodeError:
-                pass  # Ignore JSON decoding errors
-        else:
-            pass  # File does not exist; cost remains unchanged
-
     accuracy = round(len(successful_tasks) / total_tasks, 4) if total_tasks > 0 else 0
     attempted_rate = round(attempted_tasks / total_tasks, 4) if total_tasks > 0 else 0
-
-    # Get raw logging results
-    raw_logging_results = get_weave_calls(client)
 
     # Build the output JSON
     output_data = {
@@ -139,7 +197,7 @@ def process_result_file(result_path, agent_name, date, dataset_path):
         "results": {
             "accuracy": accuracy, # Success rate of correctly answering all task questions
             "attempted_rate": attempted_rate, # Rate of tasks where all questions were attempted
-            "total_cost": total_cost if total_cost > 0 else None,
+            "total_cost": total_cost,  # Always include total_cost, even if 0
             "successful_tasks": successful_tasks,
             "failed_tasks": failed_tasks
         },
@@ -147,26 +205,9 @@ def process_result_file(result_path, agent_name, date, dataset_path):
         "raw_eval_results": raw_eval_results
     }
 
-    # Add total_usage only if raw_logging_results exists and has data
-    if raw_logging_results:
-        total_usage = {}
-        for result in raw_logging_results:
-            if "summary" in result and "usage" in result["summary"]:
-                for model, model_usage in result["summary"]["usage"].items():
-                    if model not in total_usage:
-                        total_usage[model] = {
-                            "prompt_tokens": 0,
-                            "completion_tokens": 0
-                        }
-                    if "claude" in model:
-                        total_usage[model]["prompt_tokens"] += model_usage.get("input_tokens", 0)
-                        total_usage[model]["completion_tokens"] += model_usage.get("output_tokens", 0)
-                    elif "gpt" in model:
-                        total_usage[model]["prompt_tokens"] += model_usage.get("prompt_tokens", 0)
-                        total_usage[model]["completion_tokens"] += model_usage.get("completion_tokens", 0)
-        
-        if total_usage:
-            output_data["total_usage"] = total_usage
+    # Add total_usage if it exists
+    if total_usage:
+        output_data["total_usage"] = total_usage
 
     # Write the output JSON with standardized filename
     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal_json", f"{run_id}.json")
