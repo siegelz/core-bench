@@ -86,10 +86,12 @@ def process_result_file(result_path, agent_name, date, dataset_path):
     filename = os.path.basename(result_path)
     benchmark_name = get_benchmark_name(filename)
 
-    # Standardize the run_id format
-    standardized_agent_name = standardize_name(agent_name)
-    date_compact = date.replace('-', '')
-    run_id = f"{benchmark_name}_{standardized_agent_name}_{date_compact}"
+    # Create output filename using parent directory and original JSON name
+    parent_dir = os.path.basename(os.path.dirname(result_path))
+    output_filename = f"{parent_dir}_{filename}"
+    
+    # Use the output filename (without .json) as the run_id
+    run_id = os.path.splitext(output_filename)[0]
 
     client = weave.init(os.path.splitext(os.path.basename(result_path))[0])
 
@@ -209,8 +211,8 @@ def process_result_file(result_path, agent_name, date, dataset_path):
     if total_usage:
         output_data["total_usage"] = total_usage
 
-    # Write the output JSON with standardized filename
-    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal_json", f"{run_id}.json")
+    # Write the output JSON
+    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal_json", output_filename)
     with open(filepath, 'w') as f:
         json.dump(output_data, f, indent=2)
 
@@ -256,22 +258,12 @@ def main():
         results_dir = 'benchmark/results'
         files = glob.glob(os.path.join(results_dir, '**/*.json'), recursive=True)
 
-    # First collect all agent names by directory
+    # Collect agent names for all files
     agent_names = collect_agent_names(files)
 
-    # Group files by agent and benchmark level
-    agent_benchmark_groups = defaultdict(list)
+    # Process all files
     for result_file, agent_name in agent_names.items():
-        benchmark_name = get_benchmark_name(result_file)
-        group_key = (agent_name, benchmark_name)
-        agent_benchmark_groups[group_key].append(result_file)
-
-    # Process earliest file from each group
-    for (agent_name, _), file_group in agent_benchmark_groups.items():
-        # Sort files by timestamp and take earliest
-        file_group.sort(key=lambda f: get_timestamp_from_filename(f))
-        earliest_file = file_group[0]
-        process_result_file(earliest_file, agent_name, args.date, args.dataset_path)
+        process_result_file(result_file, agent_name, args.date, args.dataset_path)
 
 if __name__ == '__main__':
     main()
