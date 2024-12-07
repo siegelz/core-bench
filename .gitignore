@@ -10,3 +10,5 @@ benchmark/results
 benchmark/logs
 benchmark/agent_logs.tar.gz
 benchmark/agent_results.tar.gz
+
+benchmark_utils/hal_json
