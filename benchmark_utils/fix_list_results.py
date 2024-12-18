@@ -37,17 +37,15 @@ def find_result_files(results_dir: str) -> List[str]:
                 result_files.append(os.path.join(root, file))
     return result_files
 
-def find_list_results(result_report: Dict, gt_result: List[Dict]) -> List[Tuple[str, bool]]:
-    """Find list results and check if they match ground truth."""
-    list_results = []
-    for key in result_report.keys():
-        if key in gt_result[0] and isinstance(gt_result[0][key], list):
-            matches = result_report[key] == gt_result[0][key]
-            list_results.append((key, matches))
-    return list_results
+def find_list_question_key(gt_result: List[Dict]) -> str:
+    """Find the key in ground truth that expects a list value."""
+    for key in gt_result[0].keys():
+        if isinstance(gt_result[0][key], list):
+            return key
+    return None
 
-def get_list_results(result_file: str, dataset_file: str) -> List[Tuple[str, List[Tuple[str, bool]], Dict]]:
-    """Find results that contain list values and check if they match ground truth."""
+def process_result_file(result_file: str, dataset_file: str) -> List[Tuple[str, Dict, Dict, bool]]:
+    """Process a result file to fix list-related evaluations and total question counts."""
     with open(result_file, "r") as f:
         results = json.load(f)
     with open(dataset_file, "r") as f:
@@ -57,9 +55,18 @@ def get_list_results(result_file: str, dataset_file: str) -> List[Tuple[str, Lis
     if 'capsule_results' not in results:
         results = {"capsule_results": results}
 
-    # List to store results with list values
-    list_results = []
+    fixed_results = []
     modified = False
+
+    # Find the list question's key from ground truth
+    list_key = None
+    for capsule in dataset:
+        if capsule['capsule_id'] == 'capsule-0921079':
+            list_key = find_list_question_key(capsule['results'])
+            break
+
+    if not list_key:
+        return fixed_results
 
     for result in results['capsule_results']:
         # Find ground truth result
@@ -69,20 +76,35 @@ def get_list_results(result_file: str, dataset_file: str) -> List[Tuple[str, Lis
                 gt_result = capsule['results']
                 break
         
-        # Check for list values and evaluate
         if gt_result:
-            list_matches = find_list_results(result['result_report'], gt_result)
-            if list_matches:
-                # Re-evaluate this result using imported eval_result_json
-                evaluation = eval_result_json(gt_result, result['result_report'])
+            # Store original scores
+            original_scores = {
+                'total_vision_questions': result.get('total_vision_questions', 0),
+                'total_written_questions': result.get('total_written_questions', 0),
+                'correct_vision_answers': result.get('correct_vision_answers', 0),
+                'correct_written_answers': result.get('correct_written_answers', 0)
+            }
+            
+            # Re-evaluate using evaluations.py logic
+            evaluation = eval_result_json(gt_result, result['result_report'])
+            
+            # Check if this is the capsule with the list question
+            if result['capsule_id'] == 'capsule-0921079':
+                # Track if the answer was attempted and if it was correct
+                attempted = list_key in result['result_report']
+                is_correct = attempted and result['result_report'][list_key] == gt_result[0][list_key]
+                
+                # Update result with proper evaluation
                 result.update(evaluation)
                 modified = True
                 
-                # Store the result details
-                list_results.append((
-                    result['capsule_id'], 
-                    list_matches,
-                    evaluation
+                # Store result details
+                fixed_results.append((
+                    result['capsule_id'],
+                    original_scores,
+                    evaluation,
+                    is_correct,
+                    attempted
                 ))
 
     # Save changes if any results were modified
@@ -90,7 +112,7 @@ def get_list_results(result_file: str, dataset_file: str) -> List[Tuple[str, Lis
         with open(result_file, "w") as f:
             json.dump(results, f, indent=4)
 
-    return list_results
+    return fixed_results
 
 def main():
     results_dir = "benchmark/results"
@@ -100,45 +122,58 @@ def main():
     result_files = find_result_files(results_dir)
     
     print(f"\nFound {len(result_files)} result files")
-    print("\nResults containing list values (these were impacted by the fix):")
-    print("------------------------------------------------------------")
+    print("\nResults affected by the list question fix:")
+    print("----------------------------------------")
     
     # Track statistics
-    total_list_results = 0
-    correct_list_results = 0
-    affected_capsules = set()
+    total_attempts = 0
+    correct_answers = 0
+    fixed_totals = 0
     affected_files = []
     
     for result_file in result_files:
         try:
-            list_results = get_list_results(result_file, dataset_file)
+            fixed_results = process_result_file(result_file, dataset_file)
             
-            if list_results:
-                for capsule_id, matches, evaluation in list_results:
-                    affected_capsules.add(capsule_id)
-                    for key, is_correct in matches:
-                        total_list_results += 1
+            if fixed_results:
+                for capsule_id, old_scores, new_scores, is_correct, attempted in fixed_results:
+                    if attempted:
+                        total_attempts += 1
+                    if is_correct:
+                        correct_answers += 1
+                    
+                    # Check if totals were fixed
+                    if old_scores['total_vision_questions'] != new_scores['total_vision_questions'] or \
+                       old_scores['total_written_questions'] != new_scores['total_written_questions']:
+                        fixed_totals += 1
+                    
+                    if result_file not in affected_files:
+                        affected_files.append(result_file)
+                        print(f"\nFile: {result_file}")
+                    
+                    print(f"\nCapsule: {capsule_id}")
+                    if attempted:
                         if is_correct:
-                            correct_list_results += 1
-                            # Only print if this was a correct list result (affected by the bug)
-                            if result_file not in affected_files:
-                                affected_files.append(result_file)
-                                print(f"\nFile: {result_file}")
-                            print(f"\nCapsule: {capsule_id}")
-                            print(f"  Key: {key}")
-                            print(f"  Value matches ground truth - was previously marked incorrect due to list handling bug")
-                            print("  Scores:")
-                            print(f"    Written: {evaluation['correct_written_answers']}/{evaluation['total_written_questions']}")
-                            print(f"    Vision: {evaluation['correct_vision_answers']}/{evaluation['total_vision_questions']}")
+                            print("  Answer matches ground truth - was previously marked incorrect")
+                        else:
+                            print("  Answer attempted but incorrect")
+                    else:
+                        print("  No attempt at list question")
+                    
+                    if old_scores['total_vision_questions'] != new_scores['total_vision_questions']:
+                        print(f"  Total vision questions fixed: {old_scores['total_vision_questions']} -> {new_scores['total_vision_questions']}")
+                    print("  Scores after fix:")
+                    print(f"    Written: {new_scores['correct_written_answers']}/{new_scores['total_written_questions']}")
+                    print(f"    Vision: {new_scores['correct_vision_answers']}/{new_scores['total_vision_questions']}")
         except Exception as e:
             print(f"Error processing {result_file}: {str(e)}")
     
     print("\nSummary:")
     print("--------")
-    print(f"Total files with list values: {len(affected_files)}")
-    print(f"Total capsules with list values: {len(affected_capsules)}")
-    print(f"Total list results: {total_list_results}")
-    print(f"Correct list results: {correct_list_results}")
+    print(f"Total files affected: {len(affected_files)}")
+    print(f"Total attempts at list question: {total_attempts}")
+    print(f"Correct list answers: {correct_answers}")
+    print(f"Files with fixed question totals: {fixed_totals}")
 
 if __name__ == "__main__":
     main()
