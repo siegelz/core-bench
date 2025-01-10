@@ -42,8 +42,7 @@ fi
 sudo apt install -y poppler-utils
 
 # setup AutoGPT
-curl -sSL https://install.python-poetry.org | python3.10 -
-export PATH="/root/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 mv environment autogpt/environment
 cd autogpt
 
