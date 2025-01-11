@@ -13,7 +13,7 @@ sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo apt update
 sudo apt install python3.10 python3.10-venv python3.10-dev -y
 
-curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3.10
+curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
 
 # Install Docker
 sudo apt install docker.io -y
