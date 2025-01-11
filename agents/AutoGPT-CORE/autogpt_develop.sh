@@ -58,7 +58,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/code /code
 sudo ln -s $(pwd)/environment/$cap_subdir/data /data
 sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 
-sudo -E bash autogpt.sh run --ai-task "Please install, without sudo, R script and test it." --ai-name "$cap_subdir" --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-2024-05-13" --fast_llm "claude-3-5-sonnet-20241022" --smart_llm "claude-3-5-sonnet-20241022"  --openai_cost_budget 4
+sudo -E bash autogpt.sh run --ai-task "Please install R script using apt-get (but without sudo) and test it." --ai-name "$cap_subdir" --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-2024-05-13" --fast_llm "claude-3-5-sonnet-20241022" --smart_llm "claude-3-5-sonnet-20241022"  --openai_cost_budget 4
 
 sleep infinity
 
