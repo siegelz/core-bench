@@ -1,7 +1,7 @@
 <p align="center">
     <a href="https://arxiv.org/abs/2409.11363">
     <img alt="Paper" src="https://img.shields.io/badge/arXiv-arXiv:2409.11363-b31b1b.svg">
-    <a href = "https://agent-evals-core-leaderboard.hf.space">
+    <a href = "https://agent-evals-leaderboard.hf.space">
     <img alt="Leaderboard" src="https://img.shields.io/badge/Leaderboard-Link-blue.svg">
     <a href = "https://github.com/siegelz/core-bench">
     <img alt="GitHub" src="https://img.shields.io/badge/GitHub-Repository-181717.svg">
@@ -24,7 +24,7 @@ This harness allows you to easily evaluate your own agents, or the `AutoGPT` and
 If you are interested in generating figures and tables from the `CORE-Bench` paper, please see the `benchmark/paper_figures.ipynb` notebook.
 
 ## Leaderboard
-You can view the `CORE-Bench` leaderboard [here](https://agent-evals-core-leaderboard.hf.space). To submit your agent to the leaderboard, you must run it on this harness and follow the [instructions here](https://agent-evals-core-leaderboard.hf.space).
+The `CORE-Bench` leaderboard is hosted through the [Holistic Agent Leaderboard](https://agent-evals-leaderboard.hf.space). For instructions on submitting agents to the leaderboard, please see the [Submitting Agents to the HAL Leaderboard](#submitting-agents-to-the-hal-leaderboard) section.
 
 # Installation and Setup
 The harness has been tested with Python 3.9. Clone the repository and install the required packages:
@@ -88,8 +88,8 @@ python3 main.py \
 
 Full details for reproducing the results of the `CORE-Bench` paper can be found in the `reproduce_results.sh` script.
 
-# Adding New Agents
-To add a new agent to the harness, create a new directory in the `agents` directory with the name of the agent. The directory should contain a Bash script that that harness can invoke to start the agent, which is specified in the ``--agent_script`` flag (e.g. `coreagent_hard_gpt4o.sh`).
+# Developing Your Own Agents
+To run your own agent through the harness, create a new directory in the `agents` directory with the name of the agent. The directory should contain a Bash script that that harness can invoke to start the agent, which is specified in the ``--agent_script`` flag (e.g. `coreagent_hard_gpt4o.sh`).
 
 When the harness runs the agent, it will automatically copy all files within the agent directory directly into the base directory. In addition, the harness will create an `environment` directory within the base directory that contains the task prompt and task questions (`task.txt`) and the code repository of the associated task (`capsule-XXXXXXX`).:
 ```
@@ -109,7 +109,7 @@ environment/
 
 Therefore, your agent must read the `task.txt` file to get the task prompt and questions and navigate through the `capsule-XXXXXXX` directory to carry out the task.
 
-## Submitting Answers
+## `report.json`
 Once the agent has completed the task, it should write the answer to a file named `report.json` in the `environment` directory. The keys of the JSON object should be the task questions, and the values should be the answers. For example:
 ```json
 {
@@ -122,4 +122,33 @@ Once the agent has completed the task, it should write the answer to a file name
 The harness will automatically terminate the task once the `--agent_script` (e.g. `coreagent_hard_gpt4o.sh`) has completed. Therefore, the agent should write the `report.json` file once it has finished the task.
 
 ## Debugging and Logging
-If you wish to log any additional information (e.g. agent output, debugging information) for the harness to download after the agent has completed the task, write this information to a file named `agent_trace.log` in the **base directory with the other agent files** (not the `environment` directory). **If you plan on submitting your agent to the leaderboard, we require that you include agent traces for all tasks, so please implement this feature.**
+You are highly encouraged (and required, if you plan to submit your agent to the leaderboard) to use the `weave` library to log all LLM calls and responses. The usage is very simple. Simply import `weave` and wrap all LLM calls your agent makes in the following manner:
+```python
+import weave
+
+def get_llm_response(task_id, **kwargs):
+    with weave.attributes({'weave_task_id': os.getenv('WEAVE_TASK_ID')}):
+        response = client.chat.completions.create(
+            model=kwargs['model_name'],
+            messages=[
+                {"role": "user", "content": 'test'},
+                ],
+            max_tokens=2000,
+            n=1,
+            temperature=1,
+        )
+    return response
+```
+
+The harness automatically sets the `WEAVE_TASK_ID` environment variable.
+
+If you wish to log any additional information (e.g. agent output, debugging information) for the harness to download after the agent has completed the task (for example, while developing the agent), write this information to a file named `agent_trace.log` in the **base directory with the other agent files** (not the `environment` directory).
+
+# Submitting Agents to the HAL Leaderboard
+The `CORE-Bench` leaderboard is hosted through the [Holistic Agent Leaderboard](https://agent-evals-leaderboard.hf.space). 
+
+To submit your agent to the leaderboard, first run the agent you wish to submit through the harness. **Make sure you have developed your agent to use Weave to log all LLM calls and responses (see [Debugging and Logging](#debugging-and-logging)).**
+
+Then, run the script `benchmark_utils/hal.py`. This script uses the files in `benchmark/results` and the `weave` logs, to generate the JSON files that can be submitted to the HAL leaderboard. The script will generate a JSON file for each agent run in the `results` directory and save them in the `benchmark_utils/hal_json` directory. You may specify a specific JSON file to convert from the results directory using the `--result_path` flag.
+
+Follow the [instructions here](https://github.com/benediktstroebl/hal-harness/blob/main/README.md#uploading-results) to upload the JSON files to the HAL leaderboard.
