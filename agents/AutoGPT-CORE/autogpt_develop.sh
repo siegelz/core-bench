@@ -13,7 +13,7 @@ sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo apt update
 sudo apt install python3.10 python3.10-venv python3.10-dev -y
 
-curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3.10
 
 # Install Docker
 sudo apt install docker.io -y
@@ -45,6 +45,10 @@ sudo apt install -y poppler-utils
 # export PATH="$HOME/.local/bin:$PATH"
 mv environment autogpt/environment
 cd autogpt
+
+# remove old pexpect
+sudo rm -rf /usr/lib/python3/dist-packages/pexpect
+sudo rm -rf /usr/lib/python3/dist-packages/pexpect-*.egg-info
 
 # get capsule id from subdirectory name in environment folder
 cap_subdir=$(find ./environment -maxdepth 1 -type d -name "cap*" -exec basename {} \;)
