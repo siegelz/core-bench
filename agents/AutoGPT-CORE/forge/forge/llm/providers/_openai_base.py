@@ -119,8 +119,10 @@ class _BaseOpenAIProvider(BaseModelProvider[_ModelName, _ModelProviderSettings])
 o1_model_names = [
     "OpenAIModelName.O1_PREVIEW_v1",
     "OpenAIModelName.O1_MINI_v1",
+    "OpenAIModelName.O1_v1",
     "o1-preview-2024-09-12",
     "o1-mini-2024-09-12",
+    "o1-2024-12-17",
 ]
 class BaseOpenAIChatProvider(
     _BaseOpenAIProvider[_ModelName, _ModelProviderSettings],
