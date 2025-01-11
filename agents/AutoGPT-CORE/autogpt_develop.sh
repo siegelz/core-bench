@@ -42,6 +42,7 @@ fi
 sudo apt install -y poppler-utils
 
 # setup AutoGPT
+pip3 install "poetry>1.6.1,<2.0.0"
 export PATH="$HOME/.local/bin:$PATH"
 mv environment autogpt/environment
 cd autogpt
