@@ -42,9 +42,12 @@ fi
 sudo apt install -y poppler-utils
 
 # setup AutoGPT
-export PATH="$HOME/.local/bin:$PATH"
 mv environment autogpt/environment
 cd autogpt
+
+# remove old pexpect
+sudo rm -rf /usr/lib/python3/dist-packages/pexpect
+sudo rm -rf /usr/lib/python3/dist-packages/pexpect-*.egg-info
 
 # get capsule id from subdirectory name in environment folder
 cap_subdir=$(find ./environment -maxdepth 1 -type d -name "cap*" -exec basename {} \;)
@@ -56,7 +59,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/data /data
 sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 
 # Run the agent
-. autogpt.sh run \
+sudo -E bash autogpt.sh run \
   --ai-task "$task_prompt" \
   --ai-name "$cap_subdir" \
   --ai-role "a seasoned digital assistant: capable, intelligent, considerate, and assertive. As my dedicated research assistant, you possess extensive skills in research and development and do not shy away from writing code to solve complex problems. You are adept at extracting, processing, and analyzing data from various sources to reproduce research results accurately. Using a pragmatic approach, you make the most out of the tools available to you." \
