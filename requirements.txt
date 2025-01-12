@@ -11,6 +11,7 @@ azure-identity==1.17.1
 azure-storage-file-share==12.16.0
 azure-cli==2.61.0
 docker==7.1.0
+weave==0.51.19
 
 ipykernel==6.29.5
 seaborn==0.13.2

@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=====================
 Benchmark Utils Directory
 =====================
 
@@ -23,6 +25,7 @@ Files:
    - Processes data into the required format for benchmarking
    - Can filter by specific splits (Train/Test/OOD) or capsule IDs
    - Outputs a properly formatted JSON file for use in benchmarking
+   - (https://docs.google.com/spreadsheets/d/1mBzLbG9AXRDlj1lqF-zEEWJOBJxTwMh_rC8kaMxt5b8/edit?usp=sharing)
 
 4. fix_list_results.py
    A utility script that addresses a specific bug in the evaluation script where list values were not being
@@ -32,3 +35,7 @@ Files:
    - Reports which results were affected (where correct list answers were previously marked wrong)
    - Updates result files with corrected evaluations
    This script is primarily documented for historical purposes as the results have since been fixed in the paper.
+
+5. hal.py:
+    Converts CORE-Bench output JSONs into format to use for HAL using weave_utils.py
+>>>>>>> origin/main
