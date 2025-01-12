@@ -426,7 +426,7 @@ class VirtualMachineManager:
         _, stdout, stderr = ssh_client.exec_command("echo '127.0.0.1 codeocean.com' | sudo tee -a /etc/hosts", timeout=1)
 
         # Run the agent script on the VM
-        _, stdout, stderr = ssh_client.exec_command(f"sudo nohup bash -c '(export WEAVE_PROJECT_NAME={weave_project_name};timeout {timeout} bash /home/{username}/{agent_script}) ; touch /home/{username}/task_completed' > /home/{username}/output.log 2>&1 &", timeout=1)
+        _, stdout, stderr = ssh_client.exec_command(f"nohup bash -c '(export WEAVE_PROJECT_NAME={weave_project_name};timeout {timeout} bash /home/{username}/{agent_script}) ; touch /home/{username}/task_completed' > /home/{username}/output.log 2>&1 &", timeout=1)
 
         # Close the SSH connection
         ssh_client.close()

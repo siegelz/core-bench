@@ -42,10 +42,12 @@ fi
 sudo apt install -y poppler-utils
 
 # setup AutoGPT
-curl -sSL https://install.python-poetry.org | python3.10 -
-export PATH="/root/.local/bin:$PATH"
 mv environment autogpt/environment
 cd autogpt
+
+# remove old pexpect
+sudo rm -rf /usr/lib/python3/dist-packages/pexpect
+sudo rm -rf /usr/lib/python3/dist-packages/pexpect-*.egg-info
 
 # get capsule id from subdirectory name in environment folder
 cap_subdir=$(find ./environment -maxdepth 1 -type d -name "cap*" -exec basename {} \;)
@@ -57,7 +59,7 @@ sudo ln -s $(pwd)/environment/$cap_subdir/data /data
 sudo ln -s $(pwd)/environment/$cap_subdir/results /results
 
 # Run the agent
-. autogpt.sh run --ai-task "$task_prompt" --ai-name "$cap_subdir" --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-2024-05-13" --fast_llm "gpt-4o-2024-05-13" --smart_llm "gpt-4o-2024-05-13" --openai_cost_budget 4
+sudo -E bash autogpt.sh run --ai-task "$task_prompt" --ai-name "$cap_subdir" --skip-reprompt --continuous --log-level DEBUG --vlm "gpt-4o-2024-05-13" --fast_llm "gpt-4o-2024-05-13" --smart_llm "gpt-4o-2024-05-13" --openai_cost_budget 4
 
 cd ..
 mv autogpt/environment .
