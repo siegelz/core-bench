@@ -17,6 +17,7 @@ AGENT_NAME_MAPPING = {
     "test_coreagent_gpt4o_c-4": "CORE-Agent (gpt-4o-2024-05-13)",
     "test_coreagent_gpt4o-mini_c-4": "CORE-Agent (gpt-4o-mini-2024-07-18)",
     "test_coreagent_o1-mini_c-10": "CORE-Agent (o1-mini-2024-09-12)",
+    "test_coreagent_o1_c-50": "CORE-Agent (o1-2024-12-17)",
 }
 
 PROMPT_TOKEN_COST = {
@@ -24,6 +25,7 @@ PROMPT_TOKEN_COST = {
     "gpt-4o-2024-05-13": 5 / 1_000_000,
     "gpt-4o-mini-2024-07-18": 0.150 / 1_000_000,
     "o1-mini-2024-09-12": 3 / 1_000_000,
+    "o1-2024-12-17": 15 / 1_000_000,
 }
 
 COMPLETION_TOKEN_COST = {
@@ -31,6 +33,7 @@ COMPLETION_TOKEN_COST = {
     "gpt-4o-2024-05-13": 15 / 1_000_000,
     "gpt-4o-mini-2024-07-18": 0.6 / 1_000_000,
     "o1-mini-2024-09-12": 12 / 1_000_000,
+    "o1-2024-12-17": 60 / 1_000_000,
 }
 
 def get_benchmark_name(filename):
