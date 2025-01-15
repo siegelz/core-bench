@@ -146,7 +146,7 @@ def process_result_file(result_path, agent_name, date, dataset_path):
                     if "claude" in model:
                         total_usage[model]["prompt_tokens"] += model_usage.get("input_tokens", 0)
                         total_usage[model]["completion_tokens"] += model_usage.get("output_tokens", 0)
-                    elif "gpt" in model:
+                    elif "gpt" in model or "o1" in model:
                         total_usage[model]["prompt_tokens"] += model_usage.get("prompt_tokens", 0)
                         total_usage[model]["completion_tokens"] += model_usage.get("completion_tokens", 0)
 
