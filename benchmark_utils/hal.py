@@ -22,11 +22,15 @@ AGENT_NAME_MAPPING = {
 PROMPT_TOKEN_COST = {
     "claude-3-5-sonnet-20241022": 3 / 1_000_000,
     "gpt-4o-2024-05-13": 5 / 1_000_000,
+    "gpt-4o-mini-2024-07-18": 0.150 / 1_000_000,
+    "o1-mini-2024-09-12": 3 / 1_000_000,
 }
 
 COMPLETION_TOKEN_COST = {
     "claude-3-5-sonnet-20241022": 15 / 1_000_000,
     "gpt-4o-2024-05-13": 15 / 1_000_000,
+    "gpt-4o-mini-2024-07-18": 0.6 / 1_000_000,
+    "o1-mini-2024-09-12": 12 / 1_000_000,
 }
 
 def get_benchmark_name(filename):
