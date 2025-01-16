@@ -132,6 +132,15 @@ def process_result_file(result_path, agent_name, date, dataset_path):
     # Get raw logging results first
     raw_logging_results = get_weave_calls(client)
 
+    # Initialize costs
+    total_cost = 0.0
+    weave_cost = 0.0
+    log_based_cost = 0.0
+
+    # Always calculate log-based cost first
+    for capsule in capsule_results:
+        log_based_cost += compute_cost_from_logs(logs_dir, capsule['capsule_id'])
+
     # Calculate total usage if raw_logging_results exists and has data
     total_usage = {}
     if raw_logging_results and len(raw_logging_results) > 0:
@@ -146,28 +155,36 @@ def process_result_file(result_path, agent_name, date, dataset_path):
                     if "claude" in model:
                         total_usage[model]["prompt_tokens"] += model_usage.get("input_tokens", 0)
                         total_usage[model]["completion_tokens"] += model_usage.get("output_tokens", 0)
-                    elif "gpt" in model or "o1" in model:
+                    else:
                         total_usage[model]["prompt_tokens"] += model_usage.get("prompt_tokens", 0)
                         total_usage[model]["completion_tokens"] += model_usage.get("completion_tokens", 0)
 
         # Try to compute cost from token usage if we have data
         try:
             if total_usage:
-                total_cost = compute_cost_from_tokens(total_usage)
+                weave_cost = compute_cost_from_tokens(total_usage)
+                print(f"\nCost calculated from weave logs: ${weave_cost:.4f}")
+                print(f"Cost if calculated from regular logs: ${log_based_cost:.4f}")
+                total_cost = weave_cost  # Use weave-based cost as primary
+            else:
+                print("\nNo weave logs available, using cost from regular logs")
+                total_cost = log_based_cost
+                print(f"Cost calculated from regular logs: ${total_cost:.4f}")
         except ValueError as e:
-            print(f"Warning: {str(e)}")
-            # Fallback to log-based cost computation
-            for capsule in capsule_results:
-                total_cost += compute_cost_from_logs(logs_dir, capsule['capsule_id'])
+            print(f"\nWarning: {str(e)}")
+            print("Falling back to regular log-based cost calculation")
+            total_cost = log_based_cost
+            print(f"Cost calculated from regular logs: ${total_cost:.4f}")
         except Exception as e:
-            print(f"Error computing cost from tokens: {str(e)}")
-            # Fallback to log-based cost computation
-            for capsule in capsule_results:
-                total_cost += compute_cost_from_logs(logs_dir, capsule['capsule_id'])
+            print(f"\nError computing cost from tokens: {str(e)}")
+            print("Falling back to regular log-based cost calculation")
+            total_cost = log_based_cost
+            print(f"Cost calculated from regular logs: ${total_cost:.4f}")
     else:
         # No raw_logging_results or empty, use log-based calculation
-        for capsule in capsule_results:
-            total_cost += compute_cost_from_logs(logs_dir, capsule['capsule_id'])
+        print("\nNo weave logs found, using cost from regular logs")
+        total_cost = log_based_cost
+        print(f"Cost calculated from regular logs: ${total_cost:.4f}")
 
     for capsule in capsule_results:
         capsule_id = capsule.get('capsule_id')
