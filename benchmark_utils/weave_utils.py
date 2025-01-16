@@ -183,7 +183,8 @@ def get_weave_calls(client):
                 created = call.output['created']
             elif call.output['content']: # tooluse
                 choices = call.output['content']
-                created = int(datetime.strptime(call.started_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+                # created = int(datetime.strptime(call.started_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+                created = int(call.started_at.timestamp())
 
             output = {
                 'weave_task_id': call.attributes['weave_task_id'] if 'weave_task_id' in call.attributes else None,
