@@ -126,6 +126,8 @@ You are highly encouraged (and required, if you plan to submit your agent to the
 ```python
 import weave
 
+weave.init(os.getenv('WEAVE_PROJECT_NAME'))
+
 def get_llm_response(task_id, **kwargs):
     with weave.attributes({'weave_task_id': os.getenv('WEAVE_TASK_ID')}):
         response = client.chat.completions.create(
