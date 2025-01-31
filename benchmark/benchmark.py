@@ -271,7 +271,7 @@ class CodeOceanBenchmark:
             container = client.containers.run(
                 image = f"{task.capsule_id}-{self.timestamp}",
                 name = f"{task.capsule_id}-{self.timestamp}",
-                command = f"bash -c '(export WEAVE_PROJECT_NAME={self.timestamp}_{self.benchmark_level}; timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed'",
+                command = f"bash -c '(export WEAVE_PROJECT_NAME={self.timestamp}_{self.benchmark_level}; export WEAVE_TASK_ID={task.capsule_id}; timeout {timeout} bash /capsule/{self.agent_script} | tee /capsule/output.log) 2>&1 ; touch /capsule/task_completed'",
                 privileged = True,
                 detach = True,
                 stdout = True,
