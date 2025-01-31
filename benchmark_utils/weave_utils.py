@@ -160,52 +160,44 @@ def get_weave_calls(client):
         raise ValueError("Set the WANDB_API_KEY environment variable to your Weights & Biases API key.")
 
     print("Getting Weave traces...")
-    # URL and headers
-    url = 'https://trace.wandb.ai/calls/stream_query'
-    headers = {
-        'Content-Type': 'application/json'
-    }
 
-    # Data payload
-    payload = {
+    calls = client.server.calls_query_stream({
         "project_id": client._project_id(),
-    }
-
-    # Make the request with basic authentication
-    response = requests.post(url, headers=headers, json=payload, auth=('api', os.getenv('WANDB_API_KEY')))
-    print(os.getenv('WANDB_API_KEY'))
-    calls = [json.loads(line) for line in response.text.strip().splitlines()]
+        "filter": {"trace_roots_only": True},
+        "sort_by": [{"field":"started_at","direction":"desc"}],
+    })
 
     processed_calls = []
-    for call in tqdm(calls):
-        if call['output']:
-            if type(call['output']) is str:
-                ChatCompletion = weave.ref(call['output']).get()
+    for call in calls:
+        if call.output:
+            if type(call.output) is str:
+                ChatCompletion = weave.ref(call.output).get()
                 try:
                     choices = [choice.message.content for choice in ChatCompletion.choices]
                     created = ChatCompletion.created
                 except AttributeError as e:
                     choices = [content.text for content in ChatCompletion.content]
-                    created = call['started_at']
-            elif 'choices' in call['output']:
-                choices = call['output']['choices']
-                created = call['output']['created']
-            elif call['output']['content']: # tooluse
-                choices = call['output']['content']
-                created = int(datetime.strptime(call['started_at'], "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+                    created = call.started_at
+            elif 'choices' in call.output:
+                choices = call.output['choices']
+                created = call.output['created']
+            elif call.output['content']: # tooluse
+                choices = call.output['content']
+                # created = int(datetime.strptime(call.started_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+                created = int(call.started_at.timestamp())
 
             output = {
-                'weave_task_id': call['attributes']['weave_task_id'] if 'weave_task_id' in call['attributes'] else None,
-                'trace_id': call['trace_id'],
-                'project_id': call['project_id'],
+                'weave_task_id': call.attributes['weave_task_id'] if 'weave_task_id' in call.attributes else None,
+                'trace_id': call.trace_id,
+                'project_id': call.project_id,
                 'created_timestamp': created,
-                'inputs': call['inputs']['completion_kwargs'] if 'completion_kwargs' in call['inputs'] else call['inputs'],
-                'id': call['id'],
+                'inputs': call.inputs['completion_kwargs'] if 'completion_kwargs' in call.inputs else call.inputs,
+                'id': call.id,
                 'outputs': choices,
-                'exception':  call['exception'],
-                'summary': call['summary'],
-                'display_name': call['display_name'],
-                'attributes': call['attributes'],
+                'exception':  call.exception,
+                'summary': call.summary,
+                'display_name': call.display_name,
+                'attributes': call.attributes,
             }
             processed_calls.append(output)
     print(f"Total Weave traces: {len(processed_calls)}")

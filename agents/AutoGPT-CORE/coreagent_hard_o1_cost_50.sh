@@ -82,8 +82,8 @@ sudo -E bash autogpt.sh run \
   --skip-reprompt \
   --continuous \
   --log-level DEBUG \
-  --vlm "gpt-4o-2024-05-13" --fast_llm "o1-preview-2024-09-12" --smart_llm "o1-preview-2024-09-12" --programmatic_key_check \
-  --openai_cost_budget 10
+  --vlm "gpt-4o-2024-05-13" --fast_llm "o1-2024-12-17" --smart_llm "o1-2024-12-17" --programmatic_key_check \
+  --openai_cost_budget 50
 
 cd ..
 mv autogpt/environment .
