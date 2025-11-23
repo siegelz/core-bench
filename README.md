@@ -9,6 +9,9 @@
     <img alt="Dataset" src="https://img.shields.io/badge/Hugging%20Face-Dataset-yellow.svg">
 </p>
 
+# Update: Holistic Agent Leaderboard
+The recommended way to run CORE-Bench is now through the [Holistic Agent Leaderboard](https://github.com/princeton-pli/hal-harness) harness. This current harness is no longer actively maintained.
+
 # CORE-Bench Overview
 `CORE-Bench` is a benchmark for evaluating the ability of agents to computationally reproduce scientific papers. It comprises 270 tasks from 90 papers across computer science, social science, and medicine, written in Python or R.
 
